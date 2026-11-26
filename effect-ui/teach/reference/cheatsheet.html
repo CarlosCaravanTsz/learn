@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cheatsheet · Effect UI</title>
+    <link rel="stylesheet" href="../assets/course.css" />
+  </head>
+  <body>
+    <article class="sheet">
+      <p class="kicker">Referencia</p>
+      <h1>Cheatsheet del piloto</h1>
+      <p>
+        Fragmentos copiados de <code>effect-ui/src</code>, snapshot
+        <code>87a704b</code>. No son ejemplos inventados.
+      </p>
+      <nav class="crumbs">
+        <a href="glossary.html">Glosario</a>
+        <a href="../lessons/0001-anatomia-de-un-component.html">Lección 1</a>
+        <a href="../lessons/0002-efectos-como-valores.html">Lección 2</a>
+        <a href="../lessons/0003-probar-el-comportamiento.html">Lección 3</a>
+      </nav>
+
+      <h2>Model y Message</h2>
+      <p class="note"><code>src/TodoList.ts</code></p>
+      <pre><code>export const TodoListMessage = UiSchema.TaggedEnum({
+  UpdatedDraft: { draft: Schema.String },
+  SubmittedTodo: {},
+  ClickedToggle: { id: Schema.String },
+  ClickedDelete: { id: Schema.String },
+  ClickedFilter: { filter: TodoFilter },
+  ClickedRetry: {},
+  SucceededLoadTodos: { todos: Schema.Array(Todo) },
+  FailedLoadTodos: { reason: Schema.String },
+  SucceededSaveTodos: {},
+  FailedSaveTodos: { reason: Schema.String }
+})</code></pre>
+
+      <h2>init arranca un Command</h2>
+      <p class="note"><code>src/TodoList.ts</code></p>
+      <pre><code>init: ($) =&gt;
+  $.set({
+    draft: "",
+    filter: "all",
+    todos: [],
+    nextId: 1,
+    phase: "loading",
+    notice: null
+  }).run(LoadTodos.make({}))</code></pre>
+
+      <h2>update puro, luego $.run</h2>
+      <p class="note"><code>src/TodoList.ts</code>. El filtro no guarda.</p>
+      <pre><code>ClickedFilter: ($, { filter }) =&gt; $.evolve({ filter }),
+ClickedDelete: ($, { id }) =&gt; {
+  if ($.model.phase !== "ready") return $.model
+  if (!$.model.todos.some((todo) =&gt; todo.id === id)) return $.model
+  const todos = $.model.todos.filter((todo) =&gt; todo.id !== id)
+  return $.evolve({ todos, notice: null }).run(SaveTodos.make({ todos }))
+}</code></pre>
+
+      <h2>Command en queue</h2>
+      <p class="note"><code>src/TodoList.ts</code>. Los guardados no se pisan.</p>
+      <pre><code>export class SaveTodos extends Command.Service&lt;SaveTodos&gt;()(
+  "todos/SaveTodos",
+  {
+    args: { todos: Schema.Array(Todo) },
+    success: TodoListMessage,
+    mode: "queue"
+  }
+)</code></pre>
+
+      <h2>Command en switch</h2>
+      <p class="note"><code>src/WeatherView.ts</code>. Otra búsqueda corta la anterior.</p>
+      <pre><code>export class SearchWeather extends Command.Service&lt;SearchWeather&gt;()(
+  "weather/SearchWeather",
+  {
+    args: { query: Schema.String },
+    success: WeatherViewMessage,
+    mode: "switch"
+  }
+)</code></pre>
+
+      <h2>Subscription</h2>
+      <p class="note"><code>src/WeatherView.ts</code>. Mientras <code>edited</code> sea true.</p>
+      <pre><code>subscriptions: ({ model }) =&gt; [
+  model.edited &amp;&amp; model.query.trim() !== "" &amp;&amp;
+  Subscription.make(
+    "search",
+    model.query,
+    () =&gt;
+      Stream.fromEffect(
+        Effect.as(
+          Effect.sleep(SEARCH_DEBOUNCE),
+          WeatherViewMessage.RequestedSearch()
+        )
+      )
+  )
+]</code></pre>
+
+      <h2>Service</h2>
+      <p class="note"><code>src/services/TodoStore.ts</code></p>
+      <pre><code>export class TodoStore extends Context.Service&lt;TodoStore, {
+  readonly load: Effect.Effect&lt;
+    ReadonlyArray&lt;Todo&gt;,
+    KeyValueStore.KeyValueStoreError | Schema.SchemaError
+  &gt;
+  readonly save: (
+    todos: ReadonlyArray&lt;Todo&gt;
+  ) =&gt; Effect.Effect&lt;void, KeyValueStore.KeyValueStoreError | Schema.SchemaError&gt;
+}&gt;()("todos/TodoStore")</code></pre>
+
+      <h2>Component.provide</h2>
+      <p class="note"><code>src/TodoList.ts</code> y <code>src/WeatherView.ts</code></p>
+      <pre><code>export const TodoList = TodoListNoDeps.pipe(
+  Component.provide(
+    Layer.mergeAll(LoadTodos.layer, SaveTodos.layer).pipe(
+      Layer.provide(TodoStore.layer)
+    )
+  )
+)
+
+export const WeatherView = WeatherViewNoDeps.pipe(
+  Component.provide(SearchWeather.layer.pipe(Layer.provide(WeatherApiLive)))
+)</code></pre>
+
+      <h2>Story</h2>
+      <p class="note"><code>src/TodoList.story.test.ts</code></p>
+      <pre><code>story.expectExact(LoadTodos.make({})).resolve(LoadTodos.make({}), loadedEmpty)
+story.send(TodoListMessage.UpdatedDraft({ draft: "  Leche " }))
+  .send(TodoListMessage.SubmittedTodo())</code></pre>
+
+      <h2>Scene</h2>
+      <p class="note"><code>src/TodoList.scene.test.ts</code></p>
+      <pre><code>scene.expect(Locator.text("Cargando tareas…")).toExist()
+  .resolve(LoadTodos, TodoListMessage.SucceededLoadTodos({ todos: [] }))
+  .type(draft, "Leche")
+  .click(HtmlLocator.role("button", { name: "Agregar" }))</code></pre>
+
+      <h2>Play</h2>
+      <p class="note"><code>src/WeatherView.play.test.ts</code>. El falso, no la red.</p>
+      <pre><code>const WeatherUnderTest = WeatherViewNoDeps.pipe(
+  Component.provide(SearchWeather.layer.pipe(Layer.provide(WeatherApiFake)))
+)
+
+const play = yield* HtmlPlay.make(WeatherUnderTest, {})
+yield* TestClock.adjust("300 millis")
+yield* play.expect(Locator.text("Pto Vallarta, Estado de Jalisco")).toExist()</code></pre>
+    </article>
+  </body>
+</html>

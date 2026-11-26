@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lección 3 · Probar el comportamiento</title>
+    <link rel="stylesheet" href="../assets/course.css" />
+  </head>
+  <body>
+    <article class="sheet">
+      <p class="kicker">Lección 3 de 3</p>
+      <h1>Probar el comportamiento</h1>
+      <p>
+        Una pantalla de la fábrica se prueba por lo que hace, no por el HTML
+        accidental. El artículo, sección «Testing», separa tres pruebas. El
+        piloto tiene las tres, y ninguna abre la red.
+      </p>
+      <nav class="crumbs">
+        <a href="0002-efectos-como-valores.html">Lección 2</a>
+        <a href="../reference/glossary.html">Glosario</a>
+        <a href="../reference/cheatsheet.html">Cheatsheet</a>
+      </nav>
+
+      <h2>Story, Scene, Play</h2>
+      <ul>
+        <li>
+          <a href="../../src/TodoList.story.test.ts">TodoList.story.test.ts</a>
+          manda Messages y lee el Model. <code>resolve</code> finge el Message
+          que el Command habría devuelto. <code>localStorage</code> no entra.
+        </li>
+        <li>
+          <a href="../../src/TodoList.scene.test.ts">TodoList.scene.test.ts</a>
+          escribe «Leche», hace clic y lee el texto. El Command también se
+          resuelve a mano.
+        </li>
+        <li>
+          <a href="../../src/WeatherView.play.test.ts">WeatherView.play.test.ts</a>
+          sí corre <code>SearchWeather</code>, contra
+          <code>WeatherApiFake</code>. <code>TestClock</code> adelanta los 300&nbsp;ms.
+          Se monta <code>WeatherViewNoDeps</code> porque el Component ya
+          proveído trae el HTTP real, y un provide interior gana.
+        </li>
+      </ul>
+      <p class="note">
+        La Story del clima, en
+        <a href="../../src/WeatherView.story.test.ts">WeatherView.story.test.ts</a>,
+        comprueba el <code>switch</code> sin red: la búsqueda nueva deja la
+        primera en <code>story.interrupted</code>.
+      </p>
+
+      <h2>Fuente para leer ahora</h2>
+      <p>
+        El artículo, «Story and Scene tests» y «Play tests». El ejemplo corto
+        es el contador que se reinicia; el largo, el login de
+        <code>examples/auth</code> en el mismo snapshot.
+      </p>
+
+      <h2>Hazlo en el piloto</h2>
+      <p>
+        Agrega «borrar hechas» a
+        <a href="../../src/TodoList.ts">TodoList.ts</a>
+        y una Story en
+        <a href="../../src/TodoList.story.test.ts">TodoList.story.test.ts</a>.
+        No mires la solución hasta que <code>pnpm test</code> pase, o hasta que
+        te atores de verdad.
+      </p>
+      <ol>
+        <li>Tag nuevo en <code>TodoListMessage</code>. Escríbelo aquí, igual que los otros <code>Clicked…</code>.</li>
+        <li>En <code>update</code>: si <code>phase</code> no es <code>"ready"</code>, regresa el Model. Quédate con las tareas donde <code>completed</code> es false. Si no cambió la cantidad, regresa el Model. Si cambió, <code>$.evolve</code> y <code>SaveTodos.make</code>.</li>
+        <li>En la Story: carga vacía, agrega «Leche», complétala, resuelve cada <code>SaveTodos</code>, manda el Message nuevo, y espera la lista vacía más un <code>SaveTodos</code> con <code>todos: []</code>.</li>
+      </ol>
+      <form class="recall" data-recall data-answer="ClickedClearCompleted">
+        <label for="tag">Tag del Message, en inglés.</label>
+        <input id="tag" name="guess" autocomplete="off" spellcheck="false" />
+        <button type="submit">Comprobar</button>
+        <p class="feedback" role="status"></p>
+      </form>
+      <details>
+        <summary>Solución, cuando ya lo intentaste</summary>
+        <p>En <code>TodoListMessage</code>:</p>
+        <pre><code>ClickedClearCompleted: {}</code></pre>
+        <p>En <code>update</code>:</p>
+        <pre><code>ClickedClearCompleted: ($) =&gt; {
+  if ($.model.phase !== "ready") return $.model
+  const todos = $.model.todos.filter((todo) =&gt; !todo.completed)
+  if (todos.length === $.model.todos.length) return $.model
+  return $.evolve({ todos, notice: null }).run(SaveTodos.make({ todos }))
+}</code></pre>
+        <p>Al final de la Story que ya completa «Leche» y resuelve ese guardado:</p>
+        <pre><code>story.send(TodoListMessage.ClickedClearCompleted())
+assert.deepStrictEqual(story.model.todos, [])
+const cleared = SaveTodos.make({ todos: [] })
+story.expectExact(cleared).resolve(cleared, saved)</code></pre>
+      </details>
+
+      <h2>Sin mirar el archivo</h2>
+      <form class="quiz">
+        <fieldset data-q>
+          <legend>¿Qué hace una Story?</legend>
+          <button type="button" data-ok="0">Consulta la red real, mira HTTP.</button>
+          <button type="button" data-ok="1">Manda los Messages y mira Model.</button>
+          <button type="button" data-ok="0">Hace clic, luego lee este texto.</button>
+          <p class="feedback" role="status"></p>
+        </fieldset>
+        <fieldset data-q>
+          <legend>En una Scene, ¿cómo termina un Command?</legend>
+          <button type="button" data-ok="0">El Command sí corre de verdad.</button>
+          <button type="button" data-ok="1">El Command se resuelve a mano.</button>
+          <button type="button" data-ok="0">El Command se ignora, sin más.</button>
+          <p class="feedback" role="status"></p>
+        </fieldset>
+        <fieldset data-q>
+          <legend>¿Cuál corre el Command de verdad, sin red?</legend>
+          <button type="button" data-ok="0">Story: aún no existe el runtime.</button>
+          <button type="button" data-ok="0">Scene, porque aún no trae Layer.</button>
+          <button type="button" data-ok="1">Play, con un service de mentira.</button>
+          <p class="feedback" role="status"></p>
+        </fieldset>
+      </form>
+
+      <p class="ask">
+        Si el test no describe la pantalla que quieres en la fábrica, pregúntale
+        al agente qué tipo (Story, Scene o Play) le toca, y por qué.
+      </p>
+    </article>
+    <script src="../assets/quiz.js"></script>
+  </body>
+</html>

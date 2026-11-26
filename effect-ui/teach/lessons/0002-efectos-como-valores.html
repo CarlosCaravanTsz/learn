@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lección 2 · Efectos como valores</title>
+    <link rel="stylesheet" href="../assets/course.css" />
+  </head>
+  <body>
+    <article class="sheet">
+      <p class="kicker">Lección 2 de 3</p>
+      <h1>El efecto es un valor</h1>
+      <p>
+        En un POS, guardar el ticket y buscar el cliente no viven en la vista.
+        En el piloto, guardar tareas y buscar el clima son Commands. El
+        <code>update</code> los pide; el runtime los corre.
+      </p>
+      <nav class="crumbs">
+        <a href="0001-anatomia-de-un-component.html">Lección 1</a>
+        <a href="../reference/glossary.html">Glosario</a>
+        <a href="../reference/cheatsheet.html">Cheatsheet</a>
+        <a href="0003-probar-el-comportamiento.html">Siguiente</a>
+      </nav>
+
+      <h2>Command, service, provide</h2>
+      <p>
+        El artículo, en «Also new», dice que si un Command sigue corriendo y
+        pides otro, eliges <code>concurrent</code>, <code>switch</code> o
+        <code>queue</code>. Y que <code>Component.provide</code> le da services
+        al Component y a lo que pinta debajo.
+      </p>
+      <ul>
+        <li>
+          <a href="../../src/services/TodoStore.ts">TodoStore</a>
+          es el contrato (<code>load</code>, <code>save</code>). No sabe si
+          detrás hay <code>localStorage</code> o memoria.
+        </li>
+        <li>
+          <code>SaveTodos</code> en
+          <a href="../../src/TodoList.ts">TodoList.ts</a>
+          usa <code>mode: "queue"</code>: dos clics se escriben en orden.
+        </li>
+        <li>
+          <code>SearchWeather</code> en
+          <a href="../../src/WeatherView.ts">WeatherView.ts</a>
+          usa <code>mode: "switch"</code>. Otra ciudad corta la búsqueda anterior.
+          El ejemplo del snapshot es
+          <a href="https://github.com/Effect-TS/ui/tree/87a704bef41b40de8fa7bced97cae5d69c4233a0/examples/file-preview">examples/file-preview</a>.
+        </li>
+        <li>
+          <a href="../../src/services/WeatherApi.ts">WeatherApi</a>
+          es el HTTP. <code>Component.provide</code> entrega
+          <code>WeatherApiLive</code>. El test, en la lección 3, entrega el falso.
+        </li>
+      </ul>
+      <pre><code>mode: "switch"</code></pre>
+      <p>
+        La Subscription de <code>WeatherView</code> es el «mientras»: mientras
+        el texto esté editado, espera 400&nbsp;ms y manda
+        <code>RequestedSearch</code>. Un viaje de ida es Command; una espera
+        que se reinicia con la tecla es Subscription.
+      </p>
+      <p class="note">
+        Services y Layers, en Effect v4:
+        <a href="https://effect.website/docs/v4/requirements-management/services">services</a>,
+        <a href="https://effect.website/docs/v4/requirements-management/layers">layers</a>.
+        Quién pone <code>localStorage</code> y <code>fetch</code> está en
+        <a href="../../src/main.ts">src/main.ts</a>.
+      </p>
+
+      <h2>Fuente para leer ahora</h2>
+      <p>
+        El artículo, el párrafo «Control overlapping Commands» y el de
+        «Services per Component». Diez líneas. Luego mira
+        <code>mode: "switch"</code> en <code>FilePreview.ts</code> del snapshot.
+      </p>
+
+      <h2>Sin mirar el archivo</h2>
+      <form class="quiz">
+        <fieldset data-q>
+          <legend>¿Qué es un Command?</legend>
+          <button type="button" data-ok="1">Un valor que el runtime corre.</button>
+          <button type="button" data-ok="0">Una función metida en la view.</button>
+          <button type="button" data-ok="0">Ese hook vive guardado ahí ya.</button>
+          <p class="feedback" role="status"></p>
+        </fieldset>
+        <fieldset data-q>
+          <legend>Con mode switch, si llega otra búsqueda, ¿qué pasa?</legend>
+          <button type="button" data-ok="0">Corren las dos hasta el final.</button>
+          <button type="button" data-ok="1">La nueva sí corta la anterior.</button>
+          <button type="button" data-ok="0">La nueva espera a la anterior.</button>
+          <p class="feedback" role="status"></p>
+        </fieldset>
+        <fieldset data-q>
+          <legend>¿Qué hace Component.provide en el piloto?</legend>
+          <button type="button" data-ok="0">El entry sí conoce el dominio.</button>
+          <button type="button" data-ok="1">El Component trae ya su Layer.</button>
+          <button type="button" data-ok="0">Ese test no puede fingir nada.</button>
+          <p class="feedback" role="status"></p>
+        </fieldset>
+      </form>
+
+      <p class="ask">
+        Si <code>queue</code> y <code>switch</code> se te cruzan, pregúntale al agente
+        con un caso de la fábrica: dos cobros seguidos, o dos búsquedas de cliente.
+      </p>
+      <p><a href="0003-probar-el-comportamiento.html">Lección 3: probar el comportamiento</a></p>
+    </article>
+    <script src="../assets/quiz.js"></script>
+  </body>
+</html>

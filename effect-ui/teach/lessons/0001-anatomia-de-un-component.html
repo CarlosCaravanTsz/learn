@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lección 1 · Anatomía de un Component</title>
+    <link rel="stylesheet" href="../assets/course.css" />
+  </head>
+  <body>
+    <article class="sheet">
+      <p class="kicker">Lección 1 de 3</p>
+      <h1>Anatomía de un Component</h1>
+      <p>
+        Una pantalla de la fábrica —el ticket del punto de venta, la ficha del CRM—
+        cabe en un Component. El piloto ya tiene uno:
+        <a href="../../src/TodoList.ts">src/TodoList.ts</a>.
+      </p>
+      <nav class="crumbs">
+        <a href="../reference/glossary.html">Glosario</a>
+        <a href="../reference/cheatsheet.html">Cheatsheet</a>
+        <a href="0002-efectos-como-valores.html">Siguiente</a>
+      </nav>
+
+      <h2>Cuatro piezas, un archivo</h2>
+      <p>
+        El <a href="https://ui.effect.website/article.md">artículo</a>, sección
+        «Anatomy of a Component», dice que cada Component es un programa Elm:
+        Model, Messages, <code>init</code>, <code>update</code> y <code>view</code>.
+        El padre no guarda ese estado ni reenvía sus Messages.
+      </p>
+      <ul>
+        <li>El <strong>Model</strong> es lo que <code>update</code> cambia: borrador, filtro, lista, fase.</li>
+        <li>Un <strong>Message</strong> nombra un hecho. <code>SubmittedTodo</code> no dice «inserta»; dice que el formulario se envió.</li>
+        <li><code>update</code> es puro. <code>ClickedFilter</code> solo cambia <code>filter</code>. Borrar sí pide un Command, en la lección 2.</li>
+        <li>La <code>view</code> pinta. El botón construye <code>ClickedToggle</code>; no muta el arreglo.</li>
+      </ul>
+      <p class="note">
+        Guía del mismo snapshot, «Naming»:
+        <a href="https://github.com/Effect-TS/ui/blob/87a704bef41b40de8fa7bced97cae5d69c4233a0/ai-docs/src/10_ui/index.md">ai-docs/src/10_ui/index.md</a>.
+        Verbo en pasado, la causa primero.
+      </p>
+      <pre><code>ClickedFilter: ($, { filter }) =&gt; $.evolve({ filter })</code></pre>
+      <p>
+        Está en
+        <a href="../../src/TodoList.ts">src/TodoList.ts</a>.
+        <code>$.evolve</code> cambia el campo que nombras y deja el resto.
+        El filtro no es una lista nueva: la view filtra al pintar.
+      </p>
+
+      <h2>Fuente para leer ahora</h2>
+      <p>
+        El artículo, de «Anatomy of a Component» a «Effect UI: Page renders Counter».
+        Una sola página. El contador de ahí y <code>TodoList</code> son el mismo molde.
+      </p>
+
+      <h2>Sin mirar el archivo</h2>
+      <form class="quiz">
+        <fieldset data-q>
+          <legend>Después del montaje, ¿quién cambia el Model?</legend>
+          <button type="button" data-ok="0">La propia view pinta, no muta.</button>
+          <button type="button" data-ok="1">El update sí cambia ese Model.</button>
+          <button type="button" data-ok="0">Init corre solo en el montaje.</button>
+          <p class="feedback" role="status"></p>
+        </fieldset>
+        <fieldset data-q>
+          <legend>¿Qué es un Message?</legend>
+          <button type="button" data-ok="0">Es una orden que update sigue.</button>
+          <button type="button" data-ok="0">Un efecto que el runtime hace.</button>
+          <button type="button" data-ok="1">Dice un hecho, que ya ocurrió.</button>
+          <p class="feedback" role="status"></p>
+        </fieldset>
+        <fieldset data-q>
+          <legend>¿Dónde vive el Model de TodoList?</legend>
+          <button type="button" data-ok="1">El hijo guarda su Model local.</button>
+          <button type="button" data-ok="0">El padre guarda el Model hijo.</button>
+          <button type="button" data-ok="0">Y el padre reenvía el Message.</button>
+          <p class="feedback" role="status"></p>
+        </fieldset>
+      </form>
+
+      <p class="ask">
+        Si una respuesta no cierra, pregúntale al agente. Es el maestro de este curso:
+        puede abrir el archivo contigo y decirte en qué línea está.
+      </p>
+      <p><a href="0002-efectos-como-valores.html">Lección 2: el efecto es un valor</a></p>
+    </article>
+    <script src="../assets/quiz.js"></script>
+  </body>
+</html>

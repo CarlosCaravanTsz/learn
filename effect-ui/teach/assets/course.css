@@ -1,0 +1,156 @@
+/* Hoja compartida. Tipografía de lectura, margen ancho, tinta negra.
+   Imprime en una columna, sin fondos que gasten tóner. */
+:root {
+  color-scheme: light;
+  --ink: #1a1a1a;
+  --rule: #1a1a1a;
+  --muted: #333;
+  --paper: #fffef8;
+  --measure: 40rem;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 112.5%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Palatino, "Palatino Linotype", "Iowan Old Style", Georgia, serif;
+  line-height: 1.45;
+}
+
+.sheet {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 2.5rem 1.4rem 4rem;
+}
+
+h1, h2, h3 {
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+h1 { font-size: 1.7rem; margin: 0 0 0.4rem; }
+
+.kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin: 2rem 0 0.5rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 0.7rem;
+}
+
+h3 { font-size: 1.05rem; margin: 1.3rem 0 0.3rem; }
+
+p, li { hyphens: auto; }
+
+a { color: inherit; }
+
+nav.crumbs {
+  font-size: 0.85rem;
+  margin: 0.8rem 0 1.4rem;
+}
+
+nav.crumbs a { margin-right: 0.8rem; }
+
+.note {
+  font-size: 0.86rem;
+  color: var(--muted);
+  margin: 0.4rem 0 1rem;
+  padding-left: 0.8rem;
+  border-left: 1px solid var(--rule);
+}
+
+pre {
+  font-family: "IBM Plex Mono", ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  background: transparent;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 0.7rem 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+code { font-family: inherit; font-size: 0.92em; }
+
+dt { font-weight: 600; margin-top: 1rem; }
+
+dd { margin: 0.2rem 0 0.2rem 0; }
+
+.avoid { font-size: 0.86rem; color: var(--muted); margin: 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+th, td {
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid var(--rule);
+  padding: 0.35rem 0.6rem 0.35rem 0;
+}
+
+.quiz, .recall { margin: 1rem 0 1.4rem; }
+
+.quiz legend, .recall label {
+  display: block;
+  margin-bottom: 0.45rem;
+}
+
+.quiz button, .recall button, .recall input {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 0;
+}
+
+.quiz button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.55rem;
+  margin: 0.3rem 0;
+  cursor: pointer;
+}
+
+.quiz button:disabled { cursor: default; }
+
+.quiz button.is-correct { border-width: 2px; }
+
+.quiz button.is-wrong { border-style: dashed; }
+
+.feedback { min-height: 1.3em; margin: 0.3rem 0 0; font-size: 0.92rem; }
+
+.recall input { padding: 0.35rem 0.5rem; width: min(100%, 22rem); }
+
+.ask {
+  margin-top: 2rem;
+  font-size: 0.95rem;
+}
+
+details { margin: 0.8rem 0 1rem; }
+
+summary { cursor: pointer; }
+
+@media print {
+  html { font-size: 11pt; }
+  body { background: white; }
+  .sheet { max-width: none; padding: 0; }
+  a { text-decoration: none; }
+  pre, .quiz button { break-inside: avoid; }
+  nav.crumbs { display: none; }
+}

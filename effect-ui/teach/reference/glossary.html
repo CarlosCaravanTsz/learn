@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Glosario · Effect UI</title>
+    <link rel="stylesheet" href="../assets/course.css" />
+  </head>
+  <body>
+    <article class="sheet">
+      <p class="kicker">Referencia</p>
+      <h1>Glosario de Effect UI</h1>
+      <p>
+        El lenguaje de este curso. Las definiciones salen del
+        <a href="https://ui.effect.website/article.md">artículo</a>
+        y del snapshot <code>87a704b</code>. En este workspace, el nombre en
+        inglés es el término; no lo traduzcas en el código.
+      </p>
+      <nav class="crumbs">
+        <a href="../lessons/0001-anatomia-de-un-component.html">Lección 1</a>
+        <a href="../lessons/0002-efectos-como-valores.html">Lección 2</a>
+        <a href="../lessons/0003-probar-el-comportamiento.html">Lección 3</a>
+        <a href="cheatsheet.html">Cheatsheet</a>
+      </nav>
+
+      <h2>El Component</h2>
+      <dl>
+        <dt>Component</dt>
+        <dd>Un programa de arquitectura Elm con Model, Messages, <code>init</code>, <code>update</code> y <code>view</code> propios.</dd>
+        <dd class="avoid">Evita: componente de React, submodel de Foldkit.</dd>
+
+        <dt>Model</dt>
+        <dd>El estado que el <code>update</code> de ese Component cambia, descrito con un Schema.</dd>
+        <dd class="avoid">Evita: store, estado de la app, todo lo que la view muestra.</dd>
+
+        <dt>Message</dt>
+        <dd>Un hecho en pasado: algo ocurrió, y el <code>update</code> decide qué significa para el Model.</dd>
+        <dd class="avoid">Evita: action, comando, setState.</dd>
+
+        <dt>init</dt>
+        <dd>La función pura que entrega el primer Model, y puede arrancar un Command.</dd>
+        <dd class="avoid">Evita: constructor, useState inicial que luego se sincroniza solo.</dd>
+
+        <dt>update</dt>
+        <dd>La función pura que, dado el Model y un Message, entrega el Model siguiente.</dd>
+        <dd class="avoid">Evita: reducer con efectos adentro, handler que toca el DOM.</dd>
+
+        <dt>view</dt>
+        <dd>La función pura que dibuja el Model. Un control no muta: construye un Message.</dd>
+        <dd class="avoid">Evita: render con fetch, JSX que llama servicios.</dd>
+
+        <dt>props</dt>
+        <dd>Lo que el padre pasa al hijo. <code>init</code> y <code>update</code> lo leen en <code>$.props</code>; la view, en <code>h.props</code>.</dd>
+        <dd class="avoid">Evita: props que el hijo copia al Model para seguirlas.</dd>
+
+        <dt>events</dt>
+        <dd>Lo que el hijo reporta al padre. El padre los oye en <code>onEmit</code>; no envuelve los Messages del hijo.</dd>
+        <dd class="avoid">Evita: OutMessage, callback que el padre usa para mandar un Message hacia abajo.</dd>
+
+        <dt>UiSchema</dt>
+        <dd>El módulo de <code>@effect/ui</code> cuyo <code>TaggedEnum</code> define el union de Messages, con un constructor por tag.</dd>
+        <dd class="avoid">Evita: enum de TypeScript, union escrita a mano.</dd>
+
+        <dt>Html</dt>
+        <dd>El vocabulario de elementos del host de navegador: <code>Html.component</code> y <code>h.div</code>, <code>h.button</code>, <code>h.input</code>.</dd>
+        <dd class="avoid">Evita: JSX, el DOM como API del <code>update</code>.</dd>
+      </dl>
+
+      <h2>Efectos</h2>
+      <dl>
+        <dt>Command</dt>
+        <dd>Un efecto de una sola vuelta, descrito como valor. El runtime lo corre; el <code>update</code> solo lo pide con <code>$.run</code>.</dd>
+        <dd class="avoid">Evita: promesa suelta, useEffect.</dd>
+
+        <dt>concurrent</dt>
+        <dd>El modo en que un Command nuevo corre junto al que ya va, sin cortarlo.</dd>
+        <dd class="avoid">Evita: Promise.all escrito en la view.</dd>
+
+        <dt>switch</dt>
+        <dd>El modo en que un Command nuevo interrumpe la corrida anterior del mismo Command.</dd>
+        <dd class="avoid">Evita: cancelar un fetch a mano en el <code>update</code>.</dd>
+
+        <dt>queue</dt>
+        <dd>El modo en que un Command nuevo espera a que termine el anterior, y corren en orden.</dd>
+        <dd class="avoid">Evita: una cola propia dentro del Model.</dd>
+
+        <dt>Subscription</dt>
+        <dd>Un Stream con llave que corre mientras el Component lo lista. Si puedes decir «mientras…», es esto y no un Command.</dd>
+        <dd class="avoid">Evita: setInterval, listener colgado de <code>window</code> dentro de <code>update</code>.</dd>
+      </dl>
+
+      <h2>Servicios</h2>
+      <dl>
+        <dt>service</dt>
+        <dd>Un contrato con nombre (<code>Context.Service</code>) que un Command pide. El Component no elige la implementación.</dd>
+        <dd class="avoid">Evita: cliente HTTP importado en la view, módulo singleton.</dd>
+
+        <dt>Layer</dt>
+        <dd>La implementación de un service, armada para componerse. La plataforma vive en el entry; el dominio, junto al Component.</dd>
+        <dd class="avoid">Evita: contenedor de inyección, <code>new</code> en <code>init</code>.</dd>
+
+        <dt>Component.provide</dt>
+        <dd><code>Effect.provide</code> para un Component y lo que pinta debajo: le entrega los Layers de sus Commands.</dd>
+        <dd class="avoid">Evita: Provider de React, pasar el service por props.</dd>
+
+        <dt>Component.lazy</dt>
+        <dd>Un Component cuyo módulo se carga la primera vez que se pinta, en su propio chunk.</dd>
+        <dd class="avoid">Evita: import estático escondido, React.lazy como sinónimo en este curso.</dd>
+      </dl>
+
+      <h2>Pruebas</h2>
+      <p class="note">
+        En este workspace, Story, Scene y Play son tres pruebas distintas.
+        Ninguna abre el navegador.
+      </p>
+      <dl>
+        <dt>Story</dt>
+        <dd>Una prueba que manda Messages al <code>update</code> y mira el Model y los Commands. El Command no corre: se resuelve a mano.</dd>
+        <dd class="avoid">Evita: test de render, mock de fetch.</dd>
+
+        <dt>Scene</dt>
+        <dd>Una prueba que dispara la view (clic, texto) y lee lo que se pinta. Los Commands también se resuelven a mano.</dd>
+        <dd class="avoid">Evita: Playwright, Testing Library contra un DOM real.</dd>
+
+        <dt>Play</dt>
+        <dd>Una prueba que monta el Component y deja correr Commands, Subscriptions y fetches contra los Layers que el test provee.</dd>
+        <dd class="avoid">Evita: prueba de extremo a extremo en Chrome.</dd>
+      </dl>
+
+      <p class="ask">
+        Si un término de aquí no coincide con lo que viste en el piloto, pregúntale al agente antes de memorizarlo.
+      </p>
+    </article>
+  </body>
+</html>

@@ -7,6 +7,14 @@ Una app pequeña para aprender [Effect UI](https://ui.effect.website) (vista pre
 
 El código está comentado en español, con los nombres de la API en inglés, como salen en la documentación.
 
+## Aprende Effect UI
+
+Tres lecciones cortas, en español, sobre este piloto. Empieza por la anatomía de un Component:
+
+[teach/lessons/0001-anatomia-de-un-component.html](teach/lessons/0001-anatomia-de-un-component.html)
+
+El glosario, la cheatsheet y la misión están en [teach/](teach/MISSION.md).
+
 ## Snapshot
 
 Effect UI todavía no está en npm. Este proyecto fija el snapshot de `main` del commit:
