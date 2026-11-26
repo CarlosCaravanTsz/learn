@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>De TypeScript a infraestructura · Alchemy</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+<main>
+<nav aria-label="Material del curso">
+<a href="../lessons/0001-de-typescript-a-infraestructura.html">Fundamentos</a>
+<a href="../lessons/0002-worker-y-r2.html">Worker y R2</a>
+<a href="../lessons/0003-estado-y-plan.html">Estado y plan</a>
+<a href="../reference/guia-rapida.html">Referencia</a>
+</nav>
+<h1>De TypeScript a infraestructura</h1>
+<p>Con Alchemy describes en TypeScript dónde corre tu código y qué servicios necesita. Alchemy calcula los cambios y pide al proveedor que los aplique.</p>
+<p>Imagina que la gente que administra un taller recibe una lista de lo que debe haber en cada sala. Para saber si hace falta comprar otro armario, consultan el inventario y buscan el armario por su etiqueta. Tu código cumple el papel de la lista. Alchemy guarda el inventario y Cloudflare ejecuta los cambios que le pide.</p>
+<h2>Recursos y dependencias</h2>
+<p>Un <strong>recurso</strong> es una pieza administrada, como un servidor o un espacio de almacenamiento. El ejemplo usa un <strong>bucket R2</strong>, que guarda contenido bajo claves de texto. Un <strong>Worker</strong> es código que Cloudflare ejecuta al recibir una solicitud HTTP.</p>
+<div class="steps"><span>TypeScript</span><span>→ Alchemy</span></div>
+<p>Alchemy evalúa el <strong>stack</strong>, un grupo de recursos que se administra junto. Registra sus propiedades y relaciones. El adaptador de Cloudflare es un <strong>provider</strong>. Define cómo convertir las operaciones del plan en llamadas al servicio.</p>
+<div class="steps"><span>TypeScript</span><span>→ Alchemy</span><span>→ Provider → Cloudflare</span></div>
+<p>Al declarar <code>env: { Notes }</code> indicas que el Worker usa el bucket. Alchemy necesita resolver esa referencia para conectar ambos. El <strong>binding</strong> es la conexión que finalmente le permite al manejador acceder al bucket con <code>env.Notes</code>.</p>
+<div class="steps"><span>Solicitud HTTP</span><span>→ Worker</span><span>→ env.Notes → R2</span></div>
+<p>Como en React, una declaración expresa lo que debe existir y un motor decide qué actualizar. Aquí el motor corre cuando ejecutas un comando, y sus cambios pueden afectar servicios y datos que sobreviven al proceso. En el taller, un inventario desactualizado puede hacer que el encargado se equivoque. En Alchemy, la lectura directa del recurso depende de lo que implemente el provider.</p>
+<h2>Practica</h2>
+<details><summary>Predice qué pasa si quitas Notes de env y dejas la declaración del bucket</summary>
+<p>El stack todavía puede crear el bucket si conserva <code>yield* Notes</code>. El Worker pierde el binding. El chequeo de TypeScript señalará los accesos a <code>env.Notes</code> porque <code>InferEnv</code> deriva el tipo de <code>env</code>.</p></details>
+<p><a href="https://alchemy.run/infrastructure-as-code/stack/">Stacks en la documentación oficial</a> · <a href="https://alchemy.run/infrastructure-as-code/provider/">Providers en la documentación oficial</a></p>
+<footer>Si una predicción no coincide con lo que ves, puedes revisar el caso con tu agente usando el comando que ejecutaste y su salida.</footer>
+</main>
+</body>
+</html>

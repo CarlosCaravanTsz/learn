@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Referencia rápida · Alchemy</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+<main>
+<nav aria-label="Material del curso">
+<a href="../lessons/0001-de-typescript-a-infraestructura.html">Fundamentos</a>
+<a href="../lessons/0002-worker-y-r2.html">Worker y R2</a>
+<a href="../lessons/0003-estado-y-plan.html">Estado y plan</a>
+<a href="../reference/guia-rapida.html">Referencia</a>
+</nav>
+<h1>Referencia rápida</h1>
+<table>
+<thead><tr><th>Término</th><th>Qué significa en el laboratorio</th></tr></thead>
+<tbody>
+<tr><td>IaC</td><td>Infraestructura como código. Describe en archivos los servicios que quieres gestionar.</td></tr>
+<tr><td>Stack y stage</td><td>Grupo de recursos y entorno en el que se administra.</td></tr>
+<tr><td>ID lógico</td><td>Identidad del recurso en el stack. En el ejemplo, <code>"Notes"</code>.</td></tr>
+<tr><td>Provider</td><td>Adaptador que implementa operaciones para el proveedor de servicios.</td></tr>
+<tr><td>Estado</td><td>Registro de recursos administrados y de sus atributos.</td></tr>
+<tr><td>Binding</td><td>Conexión con la que el Worker accede al bucket por <code>env.Notes</code>.</td></tr>
+</tbody>
+</table>
+<h2>Comandos</h2>
+<ul>
+<li><code>npm run dev</code> levanta el ejemplo con recursos emulados.</li>
+<li><code>npm run check</code> comprueba contratos de TypeScript.</li>
+<li><code>npx alchemy plan --stage lab-cloud</code> calcula el cambio para ese entorno.</li>
+<li><code>npx alchemy deploy --stage lab-cloud</code> pide confirmación y aplica el plan.</li>
+<li><code>npx alchemy destroy --stage lab-cloud</code> propone eliminar los recursos de ese entorno.</li>
+</ul>
+<p><a href="https://alchemy.run/getting-started/">Inicio oficial de Alchemy</a> · <a href="https://alchemy.run/cli/">Referencia de comandos</a></p>
+<footer>Si una predicción no coincide con lo que ves, puedes revisar el caso con tu agente usando el comando que ejecutaste y su salida.</footer>
+</main>
+</body>
+</html>

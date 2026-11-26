@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Un Worker que guarda una nota · Alchemy</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+<main>
+<nav aria-label="Material del curso">
+<a href="../lessons/0001-de-typescript-a-infraestructura.html">Fundamentos</a>
+<a href="../lessons/0002-worker-y-r2.html">Worker y R2</a>
+<a href="../lessons/0003-estado-y-plan.html">Estado y plan</a>
+<a href="../reference/guia-rapida.html">Referencia</a>
+</nav>
+<h1>Un Worker que guarda una nota</h1>
+<p>Un Worker recibe una petición y usa el binding <code>env.Notes</code> para leer o escribir en R2. Vas a comprobar ambas operaciones con la versión local de Cloudflare.</p>
+<h2>Construcción y ejecución</h2>
+<p>En <a href="../examples/alchemy.run.ts">alchemy.run.ts</a>, <code>Effect.gen</code> arma un programa que Alchemy evalúa. <code>yield* Notes</code> incluye el recurso y te da acceso a atributos como <code>bucketName</code>. La secuencia del generador se parece a la de <code>await</code>, pero cada Effect es una descripción del trabajo que el motor interpreta en su contexto. Los atributos de salida pueden depender del resultado del plan aplicado.</p>
+<p>En <a href="../examples/worker.ts">worker.ts</a>, <code>fetch</code> se ejecuta por cada solicitud. El import de <code>WorkerEnv</code> aporta tipos y desaparece del código JavaScript. Cloudflare entrega el objeto <code>env</code> al Worker cuando ejecuta el manejador.</p>
+<pre><code>const Notes = Cloudflare.R2.Bucket("Notes");
+const Api = Cloudflare.Worker("Api", {
+  main: "./worker.ts",
+  env: { Notes },
+});
+
+export type WorkerEnv = Cloudflare.InferEnv&lt;typeof Api&gt;;</code></pre>
+<p>La clave <code>Notes</code> de <code>env</code> determina el acceso <code>env.Notes</code> en el manejador. La cadena <code>"Notes"</code> en <code>Bucket</code> identifica el recurso para Alchemy. El ejercicio de la tercera lección cambia esta cadena y deja el binding igual.</p>
+<h2>Corre el ejemplo</h2>
+<pre><code>cd alchemy/examples
+npm ci
+npm run check
+npm run dev</code></pre>
+<p>Desde otra terminal, usa la URL que imprima Alchemy. En los comandos se usa <code>http://localhost:1337</code> como ejemplo.</p>
+<pre><code>base=http://localhost:1337
+curl -i "$base/health"
+curl -i "$base/note"
+curl -i -X PUT --data 'Hola desde TypeScript' "$base/note"
+curl -i "$base/note"</code></pre>
+<p>En un entorno nuevo debes ver <code>200</code>, <code>404</code>, <code>204</code> y <code>200</code>. La última respuesta contiene el texto que enviaste. Si ya escribiste una nota, la primera lectura devuelve esa nota. Detén el proceso con <kbd>Ctrl+C</kbd> al terminar.</p>
+<h2>Practica</h2>
+<details><summary>Escribe otra nota y predice cuántos objetos habrá</summary>
+<p>Sigue habiendo un objeto con clave <code>note.txt</code>. <code>put</code> reemplaza su contenido. Ejecuta otro PUT y luego GET para comprobarlo.</p></details>
+<details><summary>Agrega DELETE /note y comprueba que la lectura vuelva a dar 404</summary>
+<p>Agrega una rama para <code>DELETE</code> que llame a <code>await env.Notes.delete("note.txt")</code> y devuelva <code>204</code>. Añade <code>DELETE</code> al encabezado <code>Allow</code>. Guarda, ejecuta <code>npm run check</code> y prueba con <code>curl -i -X DELETE "$base/note"</code> seguido de otro GET.</p></details>
+<p>El ejemplo está diseñado para el laboratorio local. Publicar el manejador tal cual daría a quien conozca la URL acceso de lectura y escritura a la nota.</p>
+<p><a href="https://alchemy.run/cloudflare/local-development/">Desarrollo local en Cloudflare</a> · <a href="https://alchemy.run/migrating-from-v1/#step-2-keep-your-async-handler">Manejadores async en Alchemy v2</a></p>
+<footer>Si una predicción no coincide con lo que ves, puedes revisar el caso con tu agente usando el comando que ejecutaste y su salida.</footer>
+</main>
+</body>
+</html>
