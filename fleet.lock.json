@@ -4,6 +4,15 @@
   "assets": [
     {
       "type": "skill",
+      "id": "pstack-teach",
+      "name": "teach",
+      "version": "0.15.36",
+      "path": "skills/engineering/cursor/teach/0.15.36",
+      "digest": "sha256:fdb48b35221d495ebeff126050133a86343c11ed6532292f8f0d7d0f39863c01",
+      "installName": "teach-poteto"
+    },
+    {
+      "type": "skill",
       "id": "00c347f7-e732-4816-9b69-514cf839f6ff",
       "name": "feynman-technique",
       "version": "1.0.0",
