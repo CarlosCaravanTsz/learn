@@ -1,0 +1,22 @@
+{
+  "host": {
+    "web": {},
+    "linux": {}
+  },
+  "deploy": {
+    "store": {
+      "web": "0",
+      "linux": "0"
+    }
+  },
+  "$schema": ".exact/checkout/scripts/app.schema.json",
+  "name": "Tareas",
+  "short_name": "Tareas",
+  "id": "com.learn.exacttodo",
+  "start_url": "/",
+  "display": "standalone",
+  "app": {
+    "id": "com.learn.exacttodo",
+    "name": "Tareas"
+  }
+}
