@@ -1,0 +1,20 @@
+{
+  "name": "alchemy-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "alchemy dev",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "alchemy": "2.0.0-beta.87",
+    "@alchemy.run/cloudflare": "2.0.0-beta.87",
+    "@effect/platform-bun": "4.1.4",
+    "@effect/platform-node": "4.1.4",
+    "effect": "4.1.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.3"
+  }
+}
