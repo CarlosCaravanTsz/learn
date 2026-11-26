@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conectar Effect con el ciclo de Elm</title>
+  <link rel="stylesheet" href="../../foldkit/assets/foldkit-course.css">
+</head>
+<body>
+<article>
+  <nav><a href="0002-servicios-y-schema.html">Anterior</a> · <a href="../reference/effect-y-elm.html">Referencia</a> · <a href="../../foldkit/lessons/0001-el-loop-foldkit.html">Seguir con Foldkit</a></nav>
+  <h1>Conectar Effect con el ciclo de Elm</h1>
+  <p class="lede">El Model guarda el estado. Un Message describe qué pasó. <code>update</code> calcula el próximo Model y <code>view</code> deriva la pantalla de ese estado.</p>
+
+  <h2>Un clic cambia el estado</h2>
+  <pre><code>Model Idle + Message Load("42") → update → Model Loading</code></pre>
+  <p><code>update</code> se parece al reducer de <code>useReducer</code>. Para los mismos argumentos devuelve la misma transición y no modifica el Model recibido. <code>view(Loading)</code> muestra «Cargando…». La unión discriminada de <code>Model</code> le permite a TypeScript comprobar que solo <code>Ready</code> contiene un perfil. <a href="https://guide.elm-lang.org/architecture/">The Elm Architecture</a> · <a href="https://react.dev/reference/react/useReducer">React useReducer</a></p>
+
+  <h2>El clic también puede pedir trabajo</h2>
+  <pre><code>Model Idle + Message Load("42") → update → Model Loading
+                                        → Command { id, request }</code></pre>
+  <p>En el ejemplo, el Command es un objeto que describe una carga. <code>update</code> devuelve el objeto y el runtime lo interpreta fuera de la transición. En Foldkit, los Commands ejecutan Effects que producen mensajes de resultado. React <code>useEffect</code> tiene otra responsabilidad: sincronizar un componente con un sistema externo después de que React actualiza la pantalla. <a href="https://foldkit.dev/core/architecture">Arquitectura de Foldkit</a> · <a href="https://react.dev/learn/synchronizing-with-effects">React Synchronizing with Effects</a></p>
+
+  <h2>El resultado vuelve por el mismo camino</h2>
+  <pre><code>Model Idle + Message Load("42") → update → Model Loading
+                                        → Command → Effect → Message Loaded
+Model Loading + Message Loaded  → update → Model Ready → view</code></pre>
+  <p><code>Effect.match</code> convierte un éxito en <code>Loaded</code> y un fallo esperado en <code>LoadFailed</code>. Los dos regresan a <code>update</code>. El número <code>request</code> empareja la respuesta con la carga activa. Si pediste A y luego B, la respuesta de A queda descartada aunque llegue mientras B carga. Una <em>subscription</em> aporta mensajes desde una fuente continua, como el teclado o un reloj, mientras la aplicación necesita escucharlos. <a href="https://guide.elm-lang.org/effects/http">HTTP en Elm</a> · <a href="https://foldkit.dev/core/architecture">Arquitectura de Foldkit</a></p>
+
+  <h2>Práctica</h2>
+  <p>Abre <a href="../examples/03-elm-loop.ts">03-elm-loop.ts</a> y corre <code>npm run elm</code>. El ejemplo entrega deliberadamente el fallo antiguo mientras la segunda carga está activa. Retira <code>|| model.request !== message.request</code> de la condición en <code>update</code> y vuelve a correrlo. Después restaura la condición e intercambia el orden de entrega de las dos respuestas. Ajusta las aserciones para comprobar que «Ada» permanece visible.</p>
+  <details><summary>Comprobar el resultado</summary><p>Sin comprobar el número de petición, el fallo antiguo muestra <code>Error: RequestError</code> donde la aserción esperaba «Cargando…». Con la condición restaurada y la respuesta nueva primero, el modelo pasa a <code>Ready</code>. La respuesta vieja que llega después deja el modelo en <code>Ready</code>, así que las dos aserciones deben esperar «Ada».</p></details>
+  <p>Si quieres revisar una transición concreta, trae el Model anterior y el Message. Podemos calcular la salida de <code>update</code> sin ejecutar la carga.</p>
+</article>
+</body>
+</html>

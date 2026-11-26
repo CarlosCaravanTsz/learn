@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cargar datos con servicios y Schema</title>
+  <link rel="stylesheet" href="../../foldkit/assets/foldkit-course.css">
+</head>
+<body>
+<article>
+  <nav><a href="0001-describir-y-ejecutar.html">Anterior</a> · <a href="../reference/effect-y-elm.html">Referencia</a> · <a href="0003-elm-y-effect.html">Siguiente</a></nav>
+  <h1>Cargar datos con servicios y Schema</h1>
+  <p class="lede">Un servicio decide de dónde sale el dato. Un Schema comprueba si el dato que llegó cumple el contrato.</p>
+
+  <h2>El contrato de la operación</h2>
+  <pre><code>Effect.Effect&lt;Profile, RequestError | Schema.SchemaError, ProfileSource&gt;</code></pre>
+  <p>En <code>loadProfile</code>, <code>yield* ProfileSource</code> pide al runtime la implementación asociada a esa clave de servicio. <code>source.get(id)</code> entrega un <code>unknown</code>. <code>Schema.decodeUnknownEffect(Profile)(raw)</code> examina el valor en tiempo de ejecución. Un objeto con <code>name: 42</code> produce un <code>SchemaError</code>. Si la promesa rechaza, <code>tryPromise</code> lo transforma en <code>RequestError</code> y la validación queda sin ejecutar. <a href="https://effect.website/docs/v4/requirements-management/services">Services</a> · <a href="https://effect.website/docs/v4/schema/introduction">Schema</a></p>
+
+  <h2>Dónde se elige la implementación</h2>
+  <pre><code>const runnable = loadProfile(id).pipe(Effect.provide(demoSource))
+await Effect.runPromise(runnable)</code></pre>
+  <p><code>Layer.succeed</code> registra una implementación ya construida. <code>Effect.provide</code> conecta esa capa al programa y satisface <code>ProfileSource</code>, por lo que aquí el requisito <code>R</code> pasa a <code>never</code>. Puedes usar otra capa para consumir HTTP sin modificar la validación. En una implementación con <code>fetch</code>, comprueba <code>response.ok</code> y pasa el <code>AbortSignal</code> que <code>tryPromise</code> entrega al callback si quieres que la interrupción llegue a la petición. <a href="https://effect.website/docs/v4/requirements-management/layers">Layers</a> · <a href="https://effect.website/docs/v4/getting-started/creating-effects">Creating Effects</a></p>
+  <p>El runtime ejecuta cada programa en una <em>fiber</em>, una unidad de ejecución que Effect puede coordinar e interrumpir. Si una operación necesita abrir un recurso, <code>acquireRelease</code> registra su cierre y <code>scoped</code> delimita su vida útil. Para fallos transitorios, <code>retry(Schedule.recurs(2))</code> permite hasta dos reintentos tras el intento inicial. Aplica esa política en el punto que pueda fallar de forma transitoria, como el acceso a la red. <a href="https://effect.website/docs/v4/runtime">Runtime</a> · <a href="https://effect.website/docs/v4/resource-management/scope">Scope</a> · <a href="https://effect.website/docs/v4/error-management/retrying">Retrying</a></p>
+
+  <h2>Práctica</h2>
+  <p>En <a href="../examples/02-services.ts">02-services.ts</a>, cambia solo la respuesta de <code>"invalid"</code> a <code>{ id, name: "Lin" }</code>. Predice qué aserción de <a href="../examples/run-services.ts">run-services.ts</a> falla. Actualízala y vuelve a correr <code>npm run services</code>. Después retira temporalmente <code>Effect.provide(demoSource)</code> del runner y mira <code>npm run check</code>.</p>
+  <details><summary>Comprobar el resultado</summary><p><code>invalid</code> produce <code>Lin</code> y la aserción todavía espera <code>SchemaError</code>. Al quitar la capa, TypeScript señala que <code>runPromise</code> exige un Effect con <code>R = never</code> y que todavía falta <code>ProfileSource</code>. Restaura la capa al terminar.</p></details>
+  <p>Si el error del compilador te resulta difícil de leer, trae el mensaje y revisamos de dónde viene cada parámetro.</p>
+</article>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Referencia de Effect y Elm</title>
+  <link rel="stylesheet" href="../../foldkit/assets/foldkit-course.css">
+</head>
+<body>
+<article>
+  <nav><a href="../lessons/0001-describir-y-ejecutar.html">Volver a las lecciones</a></nav>
+  <h1>Referencia de Effect y Elm</h1>
+  <h2>Effect 4</h2>
+  <dl>
+    <dt><code>Effect&lt;A, E, R&gt;</code></dt><dd>Éxito, fallo esperado y servicios requeridos.</dd>
+    <dt><code>sync</code> · <code>try</code> · <code>tryPromise</code></dt><dd>Difiere una función síncrona, adapta una función que podría lanzar, o adapta una promesa que podría rechazar.</dd>
+    <dt><code>map</code> · <code>flatMap</code> · <code>gen</code></dt><dd>Transforma un éxito, encadena otra operación o compone varios pasos con <code>yield*</code>.</dd>
+    <dt><code>Context.Service</code> · <code>Layer</code> · <code>provide</code></dt><dd>Declara una dependencia, define cómo obtener su implementación y conéctala al programa.</dd>
+    <dt><code>runPromise</code> · <code>runPromiseExit</code></dt><dd>El primero devuelve una promesa que puede rechazar. El segundo devuelve una promesa con un <code>Exit</code> que conserva el resultado o la causa del fallo.</dd>
+  </dl>
+  <h2>Arquitectura Elm</h2>
+  <pre><code>init → Model inicial y Commands iniciales
+update(Model, Message) → Model nuevo y Commands
+view(Model) → interfaz
+Command / Subscription / evento de interfaz → Message</code></pre>
+  <p>Para depurar una transición, anota el Model previo, el Message y el Model esperado. Puedes llamar a <code>update</code> directamente y también comprobar los Commands que devuelve.</p>
+</article>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "learn-effect",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "basics": "tsx examples/01-effect.ts",
+    "services": "tsx examples/run-services.ts",
+    "elm": "tsx examples/03-elm-loop.ts"
+  },
+  "dependencies": {
+    "effect": "4.1.6"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.4",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2"
+  }
+}
