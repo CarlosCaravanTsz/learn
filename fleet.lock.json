@@ -1,0 +1,22 @@
+{
+  "formatVersion": 1,
+  "catalog": "CarlosCaravanTsz/fleet-assets",
+  "assets": [
+    {
+      "type": "skill",
+      "id": "00c347f7-e732-4816-9b69-514cf839f6ff",
+      "name": "feynman-technique",
+      "version": "1.0.0",
+      "path": "skills/engineering/guicortei/feynman-technique/1.0.0",
+      "digest": "sha256:608a7ee35aa8a50ee55a8b2faf94ddf0bc67b0ab7f06ab633f6485dafd8492bf"
+    },
+    {
+      "type": "skill",
+      "id": "mattpocock-teach",
+      "name": "teach",
+      "version": "1.3.2",
+      "path": "skills/engineering/mattpocock/teach/1.3.2",
+      "digest": "sha256:5a839eeb329a9bf57da62c9c8aebc5a84ef2f433dfd0c395de8e9ed34858ac88"
+    }
+  ]
+}
