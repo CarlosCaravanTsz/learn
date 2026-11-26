@@ -12,6 +12,14 @@
     },
     {
       "type": "skill",
+      "id": "f3afcc62-adf6-4cb2-9912-acd22802cefb",
+      "name": "show-me",
+      "version": "1.0.0",
+      "path": "skills/engineering/humanlayer/show-me/1.0.0",
+      "digest": "sha256:acf7bb214b5dd4ed11c7f1cbe123ebb4c7a573475bc1d06255da390a8b870693"
+    },
+    {
+      "type": "skill",
       "id": "mattpocock-teach",
       "name": "teach",
       "version": "1.3.2",
