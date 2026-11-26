@@ -1,0 +1,14 @@
+forma tareas
+
+theme
+  AccentColor = light-dark(#0f6e6b, #1a8a86)
+  surface.page = light-dark(#f6f1e7, #1c1915)
+  surface.card = light-dark(#fffdf8, #2a2520)
+  surface.sunken = light-dark(#efe4d2, #3a332c)
+  text.primary = light-dark(#1c1915, #f6f1e7)
+  text.muted = light-dark(#5c564c, #c4b8a8)  pair=surface.card
+  line.hairline = light-dark(#e2d8c8, #4a433c)
+  status.alert-bg = light-dark(#fde8e4, #3f2220)
+  status.alert = light-dark(#8c2f2f, #ffb4ab)  pair=status.alert-bg
+  ink.on-brand = #ffffff  scheme=fixed
+  shadow.soft = light-dark(#46321414, #00000066)

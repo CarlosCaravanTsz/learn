@@ -5,7 +5,11 @@ Sigue en pre-1.0, cambia a diario y no hay paquete en npm: se usa un checkout de
 
 **Commit de Exact fijado:** `ce17cb1ebb0ce9aadd2d3875ce753a0ba5e9b027`
 
-La app tiene dos pestañas, con las rutas de Exact (`routes` / `role="tablist"`): **Tareas** y **Clima**. Clima muestra el pronóstico de Open-Meteo para una ciudad, un código postal o un par `lat,lon`. La ciudad inicial es Puerto Vallarta. Un texto con coma y dos números no pasa por geocoding; el resto sí, con `https://geocoding-api.open-meteo.com/v1/search?name=…` (ese `name` también acepta códigos postales). El pronóstico pide el tiempo actual y cinco días, los mismos campos que el piloto de Effect UI.
+La app tiene dos pestañas, con las rutas de Exact (`routes` / `role="tablist"`): **Tareas** y **Clima**.
+
+## Aspecto
+
+El color vive en `app.forma`, con `light-dark(...)`, así que claro y oscuro siguen al sistema. `AccentColor` es el teal de los controles. La columna de contenido va centrada (`max-width="40rem"`). Las tarjetas, el campo, el botón primario, la fila de cada pendiente, el error y las tarjetas del pronóstico son `style` con nombre en `app.contract` (fondo, radio, sombra, tipo `-exact-large-title` y el resto de la rampa). El botón primario no lleva `buttonStyle`: es una cara propia, la misma en web y en Linux. El campo es `appearance="none"`. La lista usa `listStyle="inset-grouped"` y el conteo queda en el `footer`, en `-exact-footnote`. Clima muestra el pronóstico de Open-Meteo para una ciudad, un código postal o un par `lat,lon`. La ciudad inicial es Puerto Vallarta. Un texto con coma y dos números no pasa por geocoding; el resto sí, con `https://geocoding-api.open-meteo.com/v1/search?name=…` (ese `name` también acepta códigos postales). El pronóstico pide el tiempo actual y cinco días, los mismos campos que el piloto de Effect UI.
 
 ## Configuración
 
@@ -118,7 +122,8 @@ La prueba del lugar desconocido tira el error a propósito. El runner lo anota c
 
 | Archivo | Qué es |
 |---|---|
-| `app.contract` | Las dos vistas en Contract y las pestañas. |
+| `app.forma` | Tokens de la marca: página, tarjeta, tinta, acento, alerta, claro y oscuro. |
+| `app.contract` | Las dos vistas, las pestañas y los `style` con nombre. |
 | `app.ts` | La lista en memoria y el seam. Los grants de red viven aquí. |
 | `weather.ts` | Geocoding, el atajo `lat,lon` y el pronóstico. Lo importa `app.ts`. |
 | `app.test.contract` | Pruebas de la lista y del clima, con la red fingida. |
