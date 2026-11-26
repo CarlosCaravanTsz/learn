@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foldkit · Glosario</title>
+  <link rel="stylesheet" href="../assets/foldkit-course.css">
+</head>
+<body>
+<article>
+  <header>
+    <p class="kicker">Referencia · Foldkit</p>
+    <h1>Glosario de Foldkit</h1>
+    <p class="lede">El vocabulario mínimo para leer cualquier pieza de una app Foldkit. Fuente: la <a href="https://foldkit.dev/core/architecture">documentación oficial de arquitectura</a>.</p>
+  </header>
+
+  <p>Cada término se usa con este significado exacto en todas las lecciones y ejercicios. Si un término no está aquí, no lo damos por sabido.</p>
+
+  <h2>El núcleo del loop</h2>
+  <table>
+    <thead><tr><th>Término</th><th>Definición</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Model</strong></td>
+        <td>La única estructura de datos que guarda <em>todo</em> el estado de la aplicación. Se define con <code>Schema.Struct</code> de Effect y es inmutable: nunca se muta, se reemplaza.</td>
+      </tr>
+      <tr>
+        <td><strong>Message</strong></td>
+        <td>Un <em>hecho</em> sobre algo que ocurrió: un clic, una tecla, una respuesta HTTP. Se declara con <code>defineMessageUnion</code>. Nombres past-tense verb-first: <code>ClickedIncrement</code>, <code>SucceededFetchWeather</code>, <code>CompletedDelayReset</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>update</strong></td>
+        <td>Función pura que recibe el Model actual y un Message, y devuelve el siguiente Model más una lista (posiblemente vacía) de Commands. Es el <em>único</em> lugar donde cambia el estado.</td>
+      </tr>
+      <tr>
+        <td><strong>view</strong></td>
+        <td>Función pura que renderiza el Model como HTML (<code>Document</code> = <code>{ title, body }</code>). Sus handlers construyen Messages; jamás ejecutan efectos ni cambian estado.</td>
+      </tr>
+      <tr>
+        <td><strong>Runtime</strong></td>
+        <td>El motor de Foldkit: ejecuta Commands, corre Subscriptions, gestiona Mounts y recursos, y redirige cada Message resultante de vuelta a <code>update</code>. Se arranca en <code>entry.ts</code> con <code>Runtime.makeApplication</code> + <code>Runtime.run</code>, separado de las definiciones puras de <code>main.ts</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Command</strong></td>
+        <td>Descripción (dato) de un efecto one-shot: petición HTTP, delay, focus, escritura en localStorage. Se define con <code>Command.define('Nombre', { messages, execute, args?, interrupt? })</code>. El runtime lo ejecuta y devuelve el resultado como uno de sus Messages declarados.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Fuentes de Messages y recursos</h2>
+  <table>
+    <thead><tr><th>Término</th><th>Definición</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Mount</strong></td>
+        <td>Trabajo imperativo atado al ciclo de vida de un elemento del DOM real (portal, observer, librería third-party). Emite un Message al acquire y hace cleanup cuando el elemento se desmonta.</td>
+      </tr>
+      <tr>
+        <td><strong>Subscription</strong></td>
+        <td>Stream con scope, activo solo mientras una porción del Model mantiene un valor. Convierte fuentes externas (timers, WebSockets, cambios de tema) en Messages. El runtime la arranca y para según esa condición.</td>
+      </tr>
+      <tr>
+        <td><strong>Resource</strong></td>
+        <td>Dependencia de duración-app (RpcClient, cliente de analytics, worker) compartida con Commands, Subscriptions y Flags. No produce Messages: es una dependencia, no una fuente.</td>
+      </tr>
+      <tr>
+        <td><strong>ManagedResource</strong></td>
+        <td>Handle con estado (WebSocket, cámara, pool de workers) vivo mientras una porción del Model mantiene un valor. El runtime lo adquiere y libera; los Commands lo usan con tipo y reciben <code>ResourceNotAvailable</code> si no está.</td>
+      </tr>
+      <tr>
+        <td><strong>Submodel</strong></td>
+        <td>Un Model + Message + update + view autónomos que un programa padre embebe y delega. Comunica hechos de alto nivel al padre mediante <code>outMessage</code>. Todos los componentes con estado de Foldkit UI son Submodels.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Piezas de Effect que Foldkit usa</h2>
+  <table>
+    <thead><tr><th>Término</th><th>Definición</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Effect</strong></td>
+        <td>Valor que <em>describe</em> un cómputo con efectos (async, fallo, dependencias) sin ejecutarlo. Es el tipo con el que se define <code>Command.execute</code>. En Foldkit, toda la app es un Effect.</td>
+      </tr>
+      <tr>
+        <td><strong>Schema</strong></td>
+        <td>Definición de datos con validación en runtime y tipo TypeScript derivado. El Model completo y los payloads de Messages se definen con Schema: <code>type Model = typeof Model.Type</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Stream</strong></td>
+        <td>Secuencia de valores en el tiempo (de Effect). Materia prima de Subscriptions y de <code>Mount.defineStream</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Layer</strong></td>
+        <td>Constructores de dependencias/servicios de Effect (ej. <code>Http.layer</code> provee el HttpClient). Se "provide" a los Effects que las necesitan.</td>
+      </tr>
+      <tr>
+        <td><strong>Interrupción</strong></td>
+        <td>Corte explícito de un Command en vuelo: <code>interrupt: true</code> (una sola instancia por nombre) o <code>interrupt: { keyFields, toKey }</code> (por clave derivada de args). El Interrupt devuelve <code>Interrupted</code> o <code>NotFound</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Helpers de Foldkit que verás en cada ejemplo</h2>
+  <table>
+    <thead><tr><th>Helper</th><th>Para qué sirve</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>defineMessageUnion</code></td>
+        <td>Declara la unión de Messages y sus constructores invocables: <code>Message.ClickedIncrement()</code>. También da <code>Message.match</code> con matching exhaustivo.</td>
+      </tr>
+      <tr>
+        <td><code>Message.match</code></td>
+        <td>Maneja cada variante del union; TypeScript exige cubrirlas todas. Es el cuerpo típico de <code>update</code>.</td>
+      </tr>
+      <tr>
+        <td><code>modifyFields</code></td>
+        <td>Actualización inmutable del Model: <code>modifyFields(model, { count: c =&gt; c + 1 })</code> devuelve un nuevo Model; el original queda intacto.</td>
+      </tr>
+      <tr>
+        <td><code>Update.Return&lt;Model, Message&gt;</code></td>
+        <td>Tipo del retorno de update: <code>{ model, commands? }</code>.</td>
+      </tr>
+      <tr>
+        <td><code>Command.define</code></td>
+        <td>Define un Command con nombre, Messages de resultado y el Effect <code>execute</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <footer>
+    <p>Referencias cruzadas: <a href="react-a-foldkit-mapa.html">Mapa React → Foldkit</a> · <a href="../lessons/0001-el-loop-foldkit.html">Lección 0001: el loop</a></p>
+    <p>Fuente primaria: <a href="https://foldkit.dev/core/architecture">foldkit.dev/core/architecture</a>. Imprimible: cada tabla evita cortes de página.</p>
+  </footer>
+</article>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foldkit 0001 · El loop: cómo piensa tu aplicación</title>
+  <link rel="stylesheet" href="../assets/foldkit-course.css">
+</head>
+<body>
+<article>
+  <header>
+    <p class="kicker">Lección 0001 · Foldkit</p>
+    <h1>El loop: cómo piensa una aplicación Foldkit</h1>
+    <p class="lede">La única idea que tienes que interiorizar hoy: en Foldkit, <strong>todo lo que ocurre es un Message, y un único lugar decide qué significa</strong>. Quince minutos de lectura y un quiz.</p>
+  </header>
+
+  <nav class="lesson-nav">
+    <p><strong>Material de apoyo:</strong> <a href="../reference/glosario-foldkit.html">Glosario de Foldkit</a> · <a href="../reference/react-a-foldkit-mapa.html">Mapa React → Foldkit</a></p>
+  </nav>
+
+  <h2>Por qué esto, para ti</h2>
+  <p>Tu objetivo es construir el <strong>frontend de un backend Effect</strong>. Foldkit existe exactamente para eso: lleva los patrones de Effect (Schema, servicios, Effects como valores) al navegador, montados sobre <a href="https://guide.elm-lang.org/architecture/">The Elm Architecture</a> (<a href="https://foldkit.dev/">foldkit.dev</a>). Vienes de React: no vas a aprender "otro framework de componentes", vas a aprender <em>una forma distinta de organizar estado y efectos</em> donde nada queda enterrado en handlers.</p>
+
+  <h2>El ciclo</h2>
+  <p>Toda app Foldkit repite el mismo ciclo, siempre (<a href="https://foldkit.dev/core/architecture">doc: Architecture</a>):</p>
+
+  <div class="diagram">
+    <span class="node">Algo sucede<br>(clic, HTTP, timer)</span>
+    <span class="arrow">→</span>
+    <span class="node data">Message</span>
+    <span class="arrow">→</span>
+    <span class="node">update<br>(pura)</span>
+    <span class="arrow">→</span>
+    <span class="node data">Model + Commands</span>
+    <span class="arrow">→</span>
+    <span class="node">view (pura)</span>
+    <span class="arrow">→</span>
+    <span class="node">HTML<br>Navegador</span>
+  </div>
+  <p class="callout-source">El runtime ejecuta los Commands y su resultado vuelve como otro Message: el ciclo se cierra en update, siempre.</p>
+
+  <p>Los Messages nacen de <strong>cinco fuentes</strong>: el navegador (clics, teclado), los Commands (resultados de efectos), los Mounts (trabajo atado a un elemento DOM), las Subscriptions (streams activos mientras el Model lo pida) y los ManagedResources (handles con estado). Ninguna de ellas toca el Model: <strong>reportan hechos, y solo <code>update</code> decide el siguiente estado</strong>.</p>
+
+  <h2>Los cuatro artefactos, en código real</h2>
+  <p>El counter canónico de la documentación (<a href="https://foldkit.dev/react/coming-from-react">Coming from React</a>), completo:</p>
+
+  <pre><code><span class="cmt">// MODEL — el estado de TODA la aplicación, definido con Schema de Effect</span>
+const Model = Schema.Struct({
+  count: Schema.Number,
+})
+type Model = typeof Model.Type
+
+<span class="cmt">// MESSAGE — la unión de hechos que pueden ocurrir</span>
+const Message = defineMessageUnion({
+  ClickedIncrement: {},
+})
+type Message = typeof Message.Type
+
+<span class="cmt">// UPDATE — función pura: (Model actual, Message) → { model, commands? }</span>
+const update = (model: Model, message: Message) =&gt;
+  Message.match&lt;Update.Return&lt;Model, Message&gt;&gt;(message, {
+    ClickedIncrement: () =&gt; ({
+      model: modifyFields(model, { count: count =&gt; count + 1 }),
+    }),
+  })
+
+<span class="cmt">// VIEW — función pura del Model a HTML; los handlers CONSTRUYEN Messages</span>
+const view = (model: Model, h: HtmlBuilder&lt;Message&gt;): Document =&gt; ({
+  title: `Count: ${model.count}`,
+  body: h.div([], [
+    h.p([], [`Count: ${model.count}`]),
+    h.button([h.OnClick(Message.ClickedIncrement())], ['Increment']),
+  ]),
+})</code></pre>
+
+  <p>Cuatro observaciones que un desarrollador React debería hacer enseguida:</p>
+  <ul>
+    <li><strong>El Model es un schema validado</strong>, no un <code>useState</code> suelto. <code>Schema.Struct</code> da tipo TypeScript <em>y</em> validación en runtime — el mismo patrón que tu backend Effect usa para sus datos.</li>
+    <li><strong><code>modifyFields</code> no muta</strong>: devuelve un Model nuevo. Nunca verás <code>model.count = 5</code>.</li>
+    <li><strong><code>Message.match</code> es exhaustivo</strong>: si mañana añades <code>ClickedReset</code> a la unión y olvidas el caso en <code>update</code>, TypeScript no compila. Como un reducer, pero sin olvidos posibles.</li>
+    <li><strong>El handler del botón no hace nada</strong>: construye el valor <code>Message.ClickedIncrement()</code> y termina. El "hacer" vive en otro sitio.</li>
+  </ul>
+
+  <h2>El giro mental: Messages son hechos, no órdenes</h2>
+
+  <blockquote>
+    <p><code>ClickedIncrement</code> no significa "suma uno". Registra que el usuario hizo clic. <em>En este</em> counter, update suma uno. Una versión futura puede pedir el siguiente valor a un servidor. El Message queda igual: es un registro estable del evento.</p>
+  </blockquote>
+  <p class="callout-source">— <a href="https://foldkit.dev/core/messages">foldkit.dev/core/messages</a></p>
+
+  <p>En React el nombre del handler suele ser el nombre de la acción (<code>handleClickIncrement</code> = "incrementa"). Aquí el nombre describe <em>qué pasó</em> y <code>update</code> decide qué significa <em>ahora</em>, con el Model <em>actual</em> en la mano. Las convenciones de nombres lo reflejan: <code>Clicked*</code> (clics), <code>Updated*</code> (inputs), <code>Succeeded*</code>/<code>Failed*</code> (resultados que pueden fallar), <code>Completed*</code> (resultados sin ambigüedad), <code>Got*</code> (hechos de un Submodel hijo).</p>
+
+  <h2>Commands: efectos como datos</h2>
+  <p>La pregunta obvia: si <code>update</code> es pura y los handlers no hacen nada, ¿dónde vive el <code>fetch</code>? Respuesta: <strong>en el segundo valor de retorno de <code>update</code></strong>. Un Command es la <em>descripción</em> de un efecto one-shot; el runtime lo ejecuta y devuelve el resultado como uno de sus Messages declarados (<a href="https://foldkit.dev/core/commands">doc: Commands</a>):</p>
+
+  <pre><code><span class="cmt">// El Command: nombre + Messages posibles + el Effect que produce uno</span>
+const DelayReset = Command.define('DelayReset', {
+  args: { seconds: Schema.Number },
+  messages: [Message.CompletedDelayReset],
+  execute: ({ seconds }) =&gt;
+    Effect.as(Effect.sleep(`${seconds} seconds`), Message.CompletedDelayReset()),
+})
+
+<span class="cmt">// update: fija el flag Y describe el trabajo pendiente. Nada se ejecuta aquí.</span>
+const update = (model: Model, message: Message) =&gt;
+  Message.match&lt;Update.Return&lt;Model, Message&gt;&gt;(message, {
+    ClickedResetAfterDelay: () =&gt; ({
+      model: modifyFields(model, { isResetting: () =&gt; true }),
+      commands: [DelayReset({ seconds: model.resetDuration })],
+    }),
+    CompletedDelayReset: () =&gt; ({
+      model: modifyFields(model, { count: () =&gt; 0, isResetting: () =&gt; false }),
+    }),
+  })</code></pre>
+
+  <p>Fíjate en la secuencia: al hacer clic, el estado cambia <em>inmediatamente</em> (<code>isResetting: true</code>) y la vista ya puede mostrar "Resetting…". El Command <code>DelayReset</code> es un dato que viaja al runtime; cuando el <code>Effect.sleep</code> completa, el runtime despacha <code>CompletedDelayReset</code> y el ciclo vuelve a empezar. <strong>Nada ocurre mientras <code>update</code> corre</strong> — no hay requests lanzadas a medias, ni timers colgando de un closure.</p>
+
+  <p>Para un fetch a tu backend el patrón es idéntico, con dos Messages de resultado: <code>SucceededFetchCount({ count })</code> y <code>FailedFetchCount({ error })</code>. El fallo <em>no es una excepción que revienta</em>: es un hecho más que llega a <code>update</code> y se convierte en estado explícito del Model (una pantalla de error, un retry). El Command HTTP completo está en la <a href="https://foldkit.dev/core/commands">doc de Commands</a>, y será la Lección 0002.</p>
+
+  <h2>Dónde entra Effect</h2>
+  <p>No necesitas "saber Effect" para esta lección, solo tres datos (<a href="https://foldkit.dev/">foldkit.dev</a>):</p>
+  <ul>
+    <li>Un <strong>Effect</strong> es un valor que <em>describe</em> un cómputo con efectos sin ejecutarlo. <code>Command.execute</code> es un Effect.</li>
+    <li><strong>Schema</strong> define datos con validación runtime + tipo derivado. El Model completo y los payloads de Messages son Schemas.</li>
+    <li>El <strong>runtime de Effect</strong> es quien ejecuta todo eso — con servicios, interrupción y concurrencia incluidas. Toda app Foldkit <em>es</em> un Effect.</li>
+  </ul>
+
+  <h2>Tu mapa React → Foldkit (resumen)</h2>
+  <table>
+    <thead><tr><th>React</th><th>Foldkit</th></tr></thead>
+    <tbody>
+      <tr><td><code>useState</code></td><td>Campos del Model</td></tr>
+      <tr><td><code>useReducer</code></td><td><code>update</code> + unión de Messages (exhaustiva)</td></tr>
+      <tr><td>Side effect en el handler</td><td>Command devuelto por <code>update</code></td></tr>
+      <tr><td><code>useEffect</code> sincronizando con el exterior</td><td>Subscription condicionada por el Model</td></tr>
+      <tr><td>Error Boundary</td><td>Los fallos esperados son Messages → estado del Model</td></tr>
+    </tbody>
+  </table>
+  <p>La tabla completa con 18 correspondencias está en el <a href="../reference/react-a-foldkit-mapa.html">mapa React → Foldkit</a>. Guárdala: la consultarás en cada lección.</p>
+
+  <h2 id="comprueba">Comprueba lo que aprendiste</h2>
+  <p>Cinco preguntas, una sola oportunidad por pregunta — recuperar de memoria es lo que hace que esto se quede grabado.</p>
+  <div id="quiz"></div>
+
+  <h2>Ejercicio: traza el flujo</h2>
+  <p>En papel (o en un comentario), sin mirar el código de arriba más de una vez: el Model es <code>{ count: 5, isResetting: false, resetDuration: 2 }</code> y el usuario hace clic en <strong>"Reset after delay"</strong>. Escribe los 4 pasos: qué Message se crea, qué devuelve <code>update</code> la primera vez, qué pasa durante los 2 segundos, y qué Message llega después con qué efecto sobre el Model.</p>
+
+  <details class="solution">
+    <summary>Mostrar la solución (intenta primero)</summary>
+    <ol>
+      <li>La vista construye <code>ClickedResetAfterDelay()</code>. El runtime lo despacha a <code>update</code>.</li>
+      <li><code>update</code> recibe el Model actual y devuelve: Model con <code>isResetting: true</code> (el <code>count</code> sigue en 5) + el Command <code>DelayReset({ seconds: 2 })</code> <em>como dato</em>. La vista ya renderiza el estado "resetting".</li>
+      <li>Durante los 2 segundos el runtime ejecuta el Effect (<code>Effect.sleep</code>). <code>update</code> no participa: no espera nada.</li>
+      <li>A los 2 segundos el runtime despacha <code>CompletedDelayReset()</code>; <code>update</code> produce el Model final: <code>count: 0, isResetting: false</code>.</li>
+    </ol>
+    <p>Si en tu traza <code>update</code> "esperó" o el fetch se "lanzó" dentro del handler: relee la sección <a href="#commands">Commands</a>. Es el error nº1 de quien viene de React.</p>
+  </details>
+
+  <h2>Manos a la obra (opcional, 5 min)</h2>
+  <p>Cuando quieras verlo correr de verdad, antes de escribir una línea:</p>
+  <pre><code>npx create-foldkit-app@latest</code></pre>
+  <p>Elige SPA + counter, arranca con <code>npm run dev</code>, y abre los <a href="https://foldkit.dev/core/devtools">DevTools</a> (pestaña abajo a la derecha): haz clic en Increment y observa el log de Messages con el Model inspeccionable en cada paso. Es el mismo loop de esta lección, en vivo. También puedes probarlo sin instalar nada en el <a href="https://foldkit.dev/playground/counter">playground del counter</a>.</p>
+
+  <h2>Fuente primaria recomendada</h2>
+  <p>Si solo lees una cosa esta semana, que sea <a href="https://foldkit.dev/core/architecture">foldkit.dev/core/architecture</a> — la página de la que procede casi todo esta lección, con el diagrama de flujo completo y la analogía del restaurante. Si te queda gas, <a href="https://foldkit.dev/react/coming-from-react">Coming from React</a> amplía el counter con auto-count (Subscriptions) y step size, mostrando <em>por qué</em> la estructura extra vale la pena.</p>
+
+  <footer>
+    <p><strong>¿Algo no cuadra?</strong> Este agente es tu profesor: pregunta lo que quieras — por qué <code>update</code> devuelve un objeto, qué pasa con dos clics rápidos, cómo se testea esto… no hay pregunta fuera de lugar.</p>
+    <p><strong>Siguiente lección (cuando la pidas):</strong> 0002 — Commands HTTP con Effect: consumir tu backend, fallos como Messages, y tu primer Story test.</p>
+    <p>Referencias: <a href="../reference/glosario-foldkit.html">Glosario</a> · <a href="../reference/react-a-foldkit-mapa.html">Mapa React → Foldkit</a></p>
+  </footer>
+</article>
+
+<script src="../assets/quiz.js"></script>
+<script>
+  FoldkitQuiz.render(document.getElementById('quiz'), [
+    {
+      prompt: 'Cuando llega un Message, ¿quién decide el siguiente estado de la app?',
+      answers: [
+        { text: 'El propio Message recibido', correct: false },
+        { text: 'La función update pura', correct: true },
+        { text: 'La vista emisora siempre', correct: false },
+        { text: 'El runtime de Foldkit', correct: false }
+      ],
+      why: 'El Message solo reporta un hecho. Solo update decide el siguiente estado a partir del Model actual (doc: Architecture).'
+    },
+    {
+      prompt: '¿Qué hace update con los efectos secundarios (fetch, timers)?',
+      answers: [
+        { text: 'Los ejecuta directamente allí', correct: false },
+        { text: 'Los delega a vistas', correct: false },
+        { text: 'Los oculta en handlers', correct: false },
+        { text: 'Los devuelve como Commands', correct: true }
+      ],
+      why: 'update es pura: nada ocurre mientras corre. Devuelve Commands como datos y el runtime los ejecuta, devolviendo el resultado como Message.'
+    },
+    {
+      prompt: 'Un Message como ClickedIncrement registra…',
+      answers: [
+        { text: 'un hecho ocurrido realmente', correct: true },
+        { text: 'una instrucción de incrementar', correct: false },
+        { text: 'una intención del usuario', correct: false },
+        { text: 'un efecto por ejecutar', correct: false }
+      ],
+      why: 'Los Messages son hechos ("el usuario hizo clic"), no órdenes. update decide qué significa ese hecho con el Model actual.'
+    },
+    {
+      prompt: '¿Dónde vive el estado de una app Foldkit?',
+      answers: [
+        { text: 'Repartido entre varios componentes', correct: false },
+        { text: 'Dentro de hooks individuales', correct: false },
+        { text: 'En un solo Model', correct: true },
+        { text: 'En el DOM renderizado', correct: false }
+      ],
+      why: 'Un único Model inmutable definido con Schema es la única fuente de verdad. Los componentes no guardan estado de aplicación.'
+    },
+    {
+      prompt: 'En Foldkit, ¿qué papel juega Effect?',
+      answers: [
+        { text: 'Una librería de estilos', correct: false },
+        { text: 'El runtime de efectos', correct: true },
+        { text: 'Un sistema de componentes', correct: false },
+        { text: 'Un bundler de TypeScript', correct: false }
+      ],
+      why: 'Foldkit está construido sobre Effect: cada app es un Effect, el Model se define con Schema, y los Commands usan Effects para servicios, interrupción y concurrencia.'
+    }
+  ])
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foldkit · Mapa React → Foldkit</title>
+  <link rel="stylesheet" href="../assets/foldkit-course.css">
+</head>
+<body>
+<article>
+  <header>
+    <p class="kicker">Referencia · Foldkit</p>
+    <h1>Mapa React → Foldkit</h1>
+    <p class="lede">Traduce lo que ya sabes de React al vocabulario de Foldkit. Punto de partida, no equivalencia uno a uno. Fuente: <a href="https://foldkit.dev/react/coming-from-react">Coming from React</a>.</p>
+  </header>
+
+  <blockquote>
+    <p>React organiza el comportamiento alrededor de componentes y Hooks. Foldkit lo organiza alrededor de <strong>un Model, Messages, update y una view</strong>. El primer counter de Foldkit es más largo porque <em>nombra la máquina de estados antes de que la app la necesite</em> — y ese costo se paga una vez.</p>
+  </blockquote>
+  <p class="callout-source">— Documentación oficial, <a href="https://foldkit.dev/react/coming-from-react">Coming from React</a></p>
+
+  <h2>Tabla de traducción</h2>
+  <table>
+    <thead><tr><th>Ecosistema React</th><th>Foldkit</th></tr></thead>
+    <tbody>
+      <tr><td><code>useState</code> / estado del componente</td><td>Campos del Model</td></tr>
+      <tr><td><code>useReducer</code></td><td>La función <code>update</code> + unión de Messages (con matching exhaustivo)</td></tr>
+      <tr><td>Side effect en un event handler (<code>fetch()</code> inline)</td><td>Un Command devuelto por <code>update</code></td></tr>
+      <tr><td><code>useEffect</code> sincronizando un recurso externo</td><td>Subscription condicionada por el Model</td></tr>
+      <tr><td>Trabajo imperativo atado a un elemento DOM</td><td><code>Mount.define</code> / <code>Mount.defineStream</code></td></tr>
+      <tr><td>Recurso con estado compartido con handlers</td><td>ManagedResource</td></tr>
+      <tr><td>Context para estado de la app</td><td>El Model (única fuente de verdad)</td></tr>
+      <tr><td>Context para servicios</td><td>Servicios y Layers de Effect</td></tr>
+      <tr><td><code>useMemo</code> / <code>useCallback</code></td><td>Sin equivalente; <code>createLazy</code> / <code>createKeyedLazy</code> solo si hay trabajo caro real</td></tr>
+      <tr><td>Custom Hook</td><td>Módulo de dominio, helper puro, primitiva de lifecycle o combinación</td></tr>
+      <tr><td>JSX</td><td>HTML builder tipado (<code>h.div</code>, <code>h.button</code>…)</td></tr>
+      <tr><td>Props de componente</td><td>Parámetros de función</td></tr>
+      <tr><td>Event handler</td><td>Un valor Message o una función que lo construye</td></tr>
+      <tr><td>React Router / TanStack Router</td><td>Routing tipado integrado (bidireccional, sin strings)</td></tr>
+      <tr><td>Next.js SSG / SSR</td><td><a href="https://foldkit.dev/core/server-rendering">Server rendering</a> en build o por request</td></tr>
+      <tr><td>React Hook Form / Formik</td><td>Model + Messages + <a href="https://foldkit.dev/core/field-validation">field validation</a></td></tr>
+      <tr><td>Headless UI / Radix</td><td><a href="https://foldkit.dev/ui/overview">Foldkit UI</a> (cada componente con estado es un Submodel)</td></tr>
+      <tr><td>Error Boundary</td><td><a href="https://foldkit.dev/core/crash-view">Crash view</a>; los fallos <em>esperados</em> de Effect llegan como Messages y son estado explícito del Model</td></tr>
+    </tbody>
+  </table>
+
+  <h2>El mismo counter, lado a lado</h2>
+
+  <h3>React: estado y efecto conviven en el componente</h3>
+  <pre><code><span class="cmt">// el estado vive en el hook; el efecto vive en el handler</span>
+const [count, setCount] = useState(0)
+
+const handleClickIncrement = () =&gt; {
+  setCount(count =&gt; count + 1)
+}</code></pre>
+
+  <h3>Foldkit: cada pieza tiene su sitio nombrado</h3>
+  <pre><code><span class="cmt">// MODEL: estado de TODA la app, con Schema</span>
+const Model = Schema.Struct({ count: Schema.Number })
+
+<span class="cmt">// MESSAGE: un hecho ocurrido, no una orden</span>
+const Message = defineMessageUnion({ ClickedIncrement: {} })
+
+<span class="cmt">// UPDATE: la única función que cambia el Model</span>
+const update = (model, message) =&gt;
+  Message.match(message, {
+    ClickedIncrement: () =&gt; ({
+      model: modifyFields(model, { count: c =&gt; c + 1 }),
+    }),
+  })
+
+<span class="cmt">// VIEW: pura; el handler construye un Message</span>
+h.button([h.OnClick(Message.ClickedIncrement())], ['Increment'])</code></pre>
+
+  <h2>La diferencia que más se nota</h2>
+  <p>En React, el problema de <em>leer valores actuales desde un efecto</em> exige herramientas como <code>useEffectEvent</code> y decisiones sobre arrays de dependencias: el intervalo captura closures del render. En Foldkit ese problema <strong>no existe</strong>: la Subscription solo se activa por una condición del Model, emite un Message (<code>Ticked</code>), y <code>update</code> lee el Model <em>actual</em> cuando ese Message llega. No hay closure que envejezca ni segunda mecánica para "leer lo último".</p>
+
+  <p>Consecuencia práctica para tests: no se necesita esperar un timer real — <code>Ticked</code> es un valor que el test despacha directamente contra <code>update</code>.</p>
+
+  <h2>Si vienes de Redux</h2>
+  <p>Model ≈ store, Message ≈ action, update ≈ reducer. Dos diferencias: update también devuelve <strong>Commands</strong>, y la unión de Messages se matching exhaustivo (el compilador te avisa si falta un caso).</p>
+
+  <footer>
+    <p>Referencias cruzadas: <a href="glosario-foldkit.html">Glosario de Foldkit</a> · <a href="../lessons/0001-el-loop-foldkit.html">Lección 0001: el loop</a></p>
+    <p>Fuente primaria: <a href="https://foldkit.dev/react/coming-from-react">foldkit.dev/react/coming-from-react</a>.</p>
+  </footer>
+</article>
+</body>
+</html>
