@@ -1,7 +1,11 @@
-// app.ts — owns the list and answers Contract's typed requests
+// app.ts owns the todo list and answers Contract. Weather lives in weather.ts.
 import type { Answer, Sources } from './app.contract.d.ts';
+import { loadWeather } from './weather.ts';
 
-export const grants = ''; // e.g. 'net.fetch https://api.example.com'
+export const grants = [
+  'net.fetch https://geocoding-api.open-meteo.com',
+  'net.fetch https://api.open-meteo.com',
+].join('\n');
 
 type Todo = { id: string; title: string; done: boolean };
 let todos: Todo[] = [];
@@ -21,6 +25,7 @@ const sources: Sources = {
     todos = todos.filter((t) => t.id !== id);
     return { count: todos.length };
   },
+  loadWeather: ([query]) => loadWeather(query),
 };
 
 export const answer: Answer = (source, args, store, storage, native) =>

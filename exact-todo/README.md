@@ -5,6 +5,8 @@ Sigue en pre-1.0, cambia a diario y no hay paquete en npm: se usa un checkout de
 
 **Commit de Exact fijado:** `ce17cb1ebb0ce9aadd2d3875ce753a0ba5e9b027`
 
+La app tiene dos pestañas, con las rutas de Exact (`routes` / `role="tablist"`): **Tareas** y **Clima**. Clima muestra el pronóstico de Open-Meteo para una ciudad, un código postal o un par `lat,lon`. La ciudad inicial es Puerto Vallarta. Un texto con coma y dos números no pasa por geocoding; el resto sí, con `https://geocoding-api.open-meteo.com/v1/search?name=…` (ese `name` también acepta códigos postales). El pronóstico pide el tiempo actual y cinco días, los mismos campos que el piloto de Effect UI.
+
 ## Configuración
 
 Hace falta Rust (rustup) y Bun 1.4.2 o más nuevo. En esta máquina el setup corrió con Bun 1.4.5 y Rust 1.99.1.
@@ -25,6 +27,8 @@ bun exact.mjs --help
 ```
 
 `EXACT` gana sobre la pista. Una ruta relativa se resuelve desde esta carpeta.
+
+`app.ts` declara `net.fetch` para `https://geocoding-api.open-meteo.com` y `https://api.open-meteo.com`. Las peticiones son GET sin headers propios (`exactTimeout` es un tope del runtime, no un header), para que el navegador no haga un preflight.
 
 ## Correr la app
 
@@ -48,10 +52,11 @@ bun exact.mjs linux
 
 Si `c++` ya es `g++` y el linker ve `libstdc++`, basta `bun exact.mjs linux`.
 
-Captura headless (420×900, el tamaño por defecto del agente):
+Captura headless (420×900, el tamaño por defecto del agente). `clock data` espera la respuesta de Open-Meteo:
 
 ```sh
-EXACT_APP_DIR="$PWD" bun "$EXACT/scripts/agent.mjs" linux "screenshot linux.png"
+EXACT_APP_DIR="$PWD" bun "$EXACT/scripts/agent.mjs" linux \
+  "tap tab-weather" "clock data" "screenshot linux-clima.png"
 ```
 
 **macOS.** No se corrió aquí: hace falta una Mac con Xcode.
@@ -69,9 +74,11 @@ bun exact.mjs ios --run
 
 ## Pruebas de contrato
 
-`app.test.contract` cubre agregar, marcar, borrar y el conteo de pendientes (`0 left`, `2 left`, `1 left`). `scripts/agent.mjs` no compila la app: en web hay que construir el dist antes; en Linux hay que haber corrido `bun exact.mjs linux`.
+`app.test.contract` cubre la lista (agregar, marcar, borrar, cuántas quedan) y el clima (Puerto Vallarta, un código postal, coordenadas, búsqueda vacía y lugar desconocido). La red de los tests está fingida con `answer fetch` y `fail fetch`, como dice la gramática de Exact: la petición no sale de la máquina. Un fixture inmediato ya está aplicado en el paso siguiente, así que la carga usa `after 200` y `clock +200` para alcanzar a ver «Buscando…».
 
-**Web** (corrido: `test "add, finish and delete": ok`, `1 passed, 0 failed`):
+`scripts/agent.mjs` no compila la app: en web hay que construir el dist antes; en Linux hay que haber corrido `bun exact.mjs linux`.
+
+**Web** (corrido: las tres pruebas `ok`, `3 passed, 0 failed`):
 
 ```sh
 export EXACT_APP_DIR=/ruta/al/repo/exact-todo
@@ -80,7 +87,7 @@ bun host/web/build.mjs exact-todo-web
 bun scripts/agent.mjs web --test "$EXACT_APP_DIR/app.test.contract"
 ```
 
-**Linux, buffer headless** (corrido: `test "add, finish and delete": ok`, `1 passed, 0 failed`):
+**Linux, buffer headless** (corrido: las tres pruebas `ok`, `3 passed, 0 failed`):
 
 ```sh
 export EXACT_APP_DIR=/ruta/al/repo/exact-todo
@@ -105,13 +112,16 @@ cd "$EXACT"
 bun scripts/agent.mjs ios --test "$EXACT_APP_DIR/app.test.contract"
 ```
 
+La prueba del lugar desconocido tira el error a propósito. El runner lo anota como `unarranged` (`No encontré «Atlantis».` en web; en Linux solo dice que el recurso se rechazó una vez) y la prueba igual pasa, porque la vista muestra ese texto.
+
 ## Mapa de archivos
 
 | Archivo | Qué es |
 |---|---|
-| `app.contract` | La vista en Contract: campo, agregar, checkbox, borrar y cuántas quedan. |
-| `app.ts` | La lista en memoria. Responde `todos`, `addTodo`, `setDone` y `removeTodo`. |
-| `app.test.contract` | La prueba de contrato, la misma en cada host. |
+| `app.contract` | Las dos vistas en Contract y las pestañas. |
+| `app.ts` | La lista en memoria y el seam. Los grants de red viven aquí. |
+| `weather.ts` | Geocoding, el atajo `lat,lon` y el pronóstico. Lo importa `app.ts`. |
+| `app.test.contract` | Pruebas de la lista y del clima, con la red fingida. |
 | `app.contract.d.ts` | Tipos del seam. Lo reescribe el build y `.gitignore` lo deja fuera. |
 | `app.json` | Manifiesto. `exact new` dejó `host.web`; el primer `bun exact.mjs linux` agregó `host.linux`. |
 | `exact.mjs` | Lanzador generado por `exact new`. |

@@ -1,5 +1,5 @@
-// Tareas: view, state, and actions. No colors or control sizes:
-// each host renders its own heading, field, button, checkbox, and list.
+// Tareas y clima. The first component is the root. Tabs are Exact's
+// routes: each tab keeps its screen, and Clima asks for weather only while it shows.
 shape Todo
   id: string
   title: string
@@ -7,6 +7,64 @@ shape Todo
 
 shape Change
   count: number
+
+shape Place
+  name: string
+  country: string
+  admin1: string
+  latitude: number
+  longitude: number
+
+shape CurrentWeather
+  time: string
+  temperatureC: number
+  windKmh: number
+  weatherCode: number
+  condition: string
+
+shape DailyForecast
+  date: string
+  weatherCode: number
+  maxC: number
+  minC: number
+  condition: string
+
+shape Report
+  place: Place
+  current: CurrentWeather
+  daily: DailyForecast[]
+
+routes nav
+  tab todos "/"
+  tab weather "/clima"
+
+component App
+  action pick(name: string)
+    nav = select(nav, name)
+  action follow(url: string)
+    nav = go(nav, url)
+  view
+    main navigationKey=`${top(nav).id}` navigate=follow testId="app" width="100%" height="100%"
+      display="flex" flex-direction="column"
+      column flex=1 min-height=0 position="relative"
+        for t in nav.tabs key=t.name
+          column role="tabpanel" id=`panel-${t.name}` testId=`panel-${t.name}` position="absolute" inset=0
+            display=(nav.tab == t.name ? "flex" : "none") flex-direction="column"
+            for e in t.stack key=e.id
+              column navigationKey=`${e.id}` position="absolute" inset=0 display="flex" flex-direction="column"
+                if e.name == "todos"
+                  Todos()
+                else
+                  Weather(shown=(nav.tab == t.name))
+      row role="tablist" testId="tabs"
+        button role="tab" aria-controls="panel-todos" aria-selected=(nav.tab == "todos") press=pick("todos")
+          testId="tab-todos" flex=1
+          image "symbol:list"
+          text "Tareas"
+        button role="tab" aria-controls="panel-weather" aria-selected=(nav.tab == "weather") press=pick("weather")
+          testId="tab-weather" flex=1
+          image "symbol:location"
+          text "Clima"
 
 component Todos
   state draft = ""
@@ -26,7 +84,7 @@ component Todos
     send changed = removeTodo(id)
 
   view
-    list appearance="auto" height="100%"
+    list appearance="auto" flex=1 min-height=0
       section
         header
           text `${left} left` role="heading" testId="count"
@@ -41,3 +99,51 @@ component Todos
             text t.title flex=1
             button press=remove(t.id) destructive=true testId=`remove-${t.id}`
               text "Delete"
+
+component Weather
+  props
+    shown: bool
+  state draft = "Puerto Vallarta"
+  state query = "Puerto Vallarta"
+  state clientError = ""
+  resource report = loadWeather(query) when shown and query != "" as shape Report else empty()
+  derive placeTitle = report.place.admin1 != "" ? `${report.place.name}, ${report.place.admin1}` : report.place.name
+  derive phase = clientError != "" or failed(report) ? "error" : not current(report) ? "loading" : "success"
+  derive message = clientError != "" ? clientError : match failure(report) { case some(f) => f.code == "offline" ? "Sin conexión." : f.message, case none => "" }
+
+  action edit(value: string)
+    draft = value
+  action search
+    if draft.trim() == ""
+      clientError = "Escribe una ciudad."
+    else
+      clientError = ""
+      query = draft.trim()
+
+  view
+    column flex=1 min-height=0 padding=16 gap=12
+      text "Clima" role="heading" aria-level=1
+      text "Open-Meteo, sin API key"
+      row gap=8 align-items="center"
+        input value=draft input=edit submit=search placeholder="Ciudad, código postal o lat,lon"
+          aria-label="Ciudad" testId="city" flex=1 min-width=0
+        button press=search buttonStyle="filled" testId="search"
+          text "Buscar"
+      text phase testId="weather-phase" display="none"
+      if phase == "loading"
+        text `Buscando ${query}…` role="status" testId="weather-loading"
+      else if phase == "error"
+        text message role="alert" testId="weather-error"
+      else
+        column gap=8 testId="weather-report"
+          text placeTitle testId="weather-place"
+          if report.place.country != ""
+            text report.place.country testId="weather-country"
+          text `${report.current.temperatureC.toFixed(1)} °C` testId="weather-temp"
+          text report.current.condition testId="weather-condition"
+          text `Viento ${report.current.windKmh.toFixed(1)} km/h` testId="weather-wind"
+          for day in report.daily key=day.date
+            row gap=8
+              text day.date testId=`day-${day.date}`
+              text day.condition flex=1
+              text `${day.minC.toFixed(1)} °C – ${day.maxC.toFixed(1)} °C` testId=`range-${day.date}`
