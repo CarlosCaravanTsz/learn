@@ -8,22 +8,26 @@
 </head>
 <body>
 <article>
-  <nav><a href="../lessons/0001-describir-y-ejecutar.html">Volver a las lecciones</a></nav>
+  <nav><a href="../README.md">Índice</a></nav>
   <h1>Referencia de Effect y Elm</h1>
-  <h2>Effect 4</h2>
+
+  <h2>¿En qué línea empieza la tarea?</h2>
+  <pre><code>const tarea = Effect.sync(() =&gt; console.log("Hola"))
+await Effect.runPromise(tarea)</code></pre>
+  <p>La primera línea guarda el trabajo en un Effect. La segunda lo ejecuta y espera a que termine.</p>
+  <p>En <code>Effect&lt;A, E, R&gt;</code>, <code>A</code> es el resultado si sale bien, <code>E</code> describe los fallos esperados y <code>R</code> dice qué servicios necesita el trabajo. <a href="../lessons/0001-describir-y-ejecutar.html">Volver al ejemplo</a></p>
+
+  <h2>¿Por qué falló la carga?</h2>
   <dl>
-    <dt><code>Effect&lt;A, E, R&gt;</code></dt><dd>Éxito, fallo esperado y servicios requeridos.</dd>
-    <dt><code>sync</code> · <code>try</code> · <code>tryPromise</code></dt><dd>Difiere una función síncrona, adapta una función que podría lanzar, o adapta una promesa que podría rechazar.</dd>
-    <dt><code>map</code> · <code>flatMap</code> · <code>gen</code></dt><dd>Transforma un éxito, encadena otra operación o compone varios pasos con <code>yield*</code>.</dd>
-    <dt><code>Context.Service</code> · <code>Layer</code> · <code>provide</code></dt><dd>Declara una dependencia, define cómo obtener su implementación y conéctala al programa.</dd>
-    <dt><code>runPromise</code> · <code>runPromiseExit</code></dt><dd>El primero devuelve una promesa que puede rechazar. El segundo devuelve una promesa con un <code>Exit</code> que conserva el resultado o la causa del fallo.</dd>
+    <dt><code>RequestError</code></dt><dd>Falló el paso que pide el dato.</dd>
+    <dt><code>SchemaError</code></dt><dd>Llegó un dato que incumple la regla del Schema. Por ejemplo, <code>name</code> era un número.</dd>
   </dl>
-  <h2>Arquitectura Elm</h2>
-  <pre><code>init → Model inicial y Commands iniciales
-update(Model, Message) → Model nuevo y Commands
-view(Model) → interfaz
-Command / Subscription / evento de interfaz → Message</code></pre>
-  <p>Para depurar una transición, anota el Model previo, el Message y el Model esperado. Puedes llamar a <code>update</code> directamente y también comprobar los Commands que devuelve.</p>
+  <p>El servicio trae el dato. La Layer entrega la implementación del servicio y <code>Effect.provide</code> la conecta al programa. <a href="../lessons/0002-servicios-y-schema.html">Volver al ejemplo</a></p>
+
+  <h2>¿Qué cambió la pantalla?</h2>
+  <pre><code>Load   → update → Loading → «Cargando…»
+Loaded → update → Ready   → «Ada»</code></pre>
+  <p>El Model dice en qué estado está la pantalla. Un Message describe qué pasó. <code>update</code> decide el estado siguiente y puede devolver un Command para pedir trabajo. El resultado del Command vuelve en otro mensaje. <code>view</code> decide qué mostrar a partir del Model. <a href="../lessons/0003-elm-y-effect.html">Volver al ejemplo</a></p>
 </article>
 </body>
 </html>
