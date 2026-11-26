@@ -1,0 +1,244 @@
+// Tareas y clima. The first component is the root. Tabs are Exact's
+// routes: each tab keeps its screen, and Clima asks for weather only while it shows.
+// Paint lives in named styles and app.forma tokens, so light, dark, web and Linux share it.
+shape Todo
+  id: string
+  title: string
+  done: bool
+
+shape Change
+  count: number
+
+shape Place
+  name: string
+  country: string
+  admin1: string
+  latitude: number
+  longitude: number
+
+shape CurrentWeather
+  time: string
+  temperatureC: number
+  windKmh: number
+  weatherCode: number
+  condition: string
+
+shape DailyForecast
+  date: string
+  weatherCode: number
+  maxC: number
+  minC: number
+  condition: string
+
+shape Report
+  place: Place
+  current: CurrentWeather
+  daily: DailyForecast[]
+
+style Screen
+  flex = 1
+  min-height = 0
+  padding = 24
+  gap = 16
+  background-color = "surface.page"
+  color = "text.primary"
+  align-items = "center"
+
+style Column
+  width = "100%"
+  max-width = "40rem"
+  flex = 1
+  min-height = 0
+  gap = 16
+
+style Card
+  background-color = "surface.card"
+  border-radius = 20
+  padding = 16
+  gap = 12
+  border-width = 1
+  border-style = "solid"
+  border-color = "line.hairline"
+  box-shadow = "0 12px 32px shadow.soft"
+
+style Field
+  flex = 1
+  min-width = 0
+  background-color = "surface.sunken"
+  color = "text.primary"
+  border-radius = 12
+  padding = 12
+  min-height = 44
+  border-width = 1
+  border-style = "solid"
+  border-color = "line.hairline"
+  font = "-exact-body"
+  ::placeholder
+    color = "text.muted"
+
+style Primary
+  background-color = "AccentColor"
+  color = "ink.on-brand"
+  border-radius = 12
+  padding = 12
+  min-height = 44
+  border-width = 0
+  border-style = "none"
+  :active
+    opacity = 0.82
+
+style Quiet
+  background-color = "transparent"
+  color = "status.alert"
+  border-radius = 999
+  padding = 8
+  border-width = 0
+  border-style = "none"
+
+style TodoRow
+  background-color = "surface.sunken"
+  border-radius = 14
+  padding = 12
+  gap = 12
+  align-items = "center"
+  margin-bottom = 8
+
+style DayCard
+  background-color = "surface.sunken"
+  border-radius = 14
+  padding = 10
+  gap = 4
+  flex = "1 1 8rem"
+  min-width = 0
+  text-align = "center"
+
+style Alert
+  background-color = "status.alert-bg"
+  color = "status.alert"
+  border-radius = 12
+  padding = 12
+  font = "-exact-subheadline"
+
+routes nav
+  tab todos "/"
+  tab weather "/clima"
+
+component App
+  action pick(name: string)
+    nav = select(nav, name)
+  action follow(url: string)
+    nav = go(nav, url)
+  view
+    main navigationKey=`${top(nav).id}` navigate=follow testId="app" width="100%" height="100%"
+      display="flex" flex-direction="column" background-color="surface.page" color="text.primary"
+      column flex=1 min-height=0 position="relative"
+        for t in nav.tabs key=t.name
+          column role="tabpanel" id=`panel-${t.name}` testId=`panel-${t.name}` position="absolute" inset=0
+            display=(nav.tab == t.name ? "flex" : "none") flex-direction="column"
+            for e in t.stack key=e.id
+              column navigationKey=`${e.id}` navigationScroll=(e.name == "todos" ? "todos" : "weather")
+                position="absolute" inset=0 display="flex" flex-direction="column"
+                if e.name == "todos"
+                  Todos()
+                else
+                  Weather(shown=(nav.tab == t.name))
+      row role="tablist" testId="tabs" background-color="surface.card"
+        border-top-width=1 border-top-style="solid" border-top-color="line.hairline"
+        button role="tab" aria-controls="panel-todos" aria-selected=(nav.tab == "todos") press=pick("todos")
+          testId="tab-todos" flex=1
+          image "symbol:list"
+          text "Tareas"
+        button role="tab" aria-controls="panel-weather" aria-selected=(nav.tab == "weather") press=pick("weather")
+          testId="tab-weather" flex=1
+          image "symbol:location"
+          text "Clima"
+
+component Todos
+  state draft = ""
+  mutation changed as shape Change refreshes todos
+  resource todos = todos() as shape Todo[]
+  derive left = todos.filter(t => not t.done).length
+
+  action edit(value: string)
+    draft = value
+  action add
+    if draft.trim() != ""
+      send changed = addTodo(draft.trim())
+      draft = ""
+  action toggle(id: string, done: bool)
+    send changed = setDone(id, done)
+  action remove(id: string)
+    send changed = removeTodo(id)
+
+  view
+    list id="todos" appearance="auto" listStyle="inset-grouped" flex=1 min-height=0 background-color="surface.page"
+      section
+        header
+          column gap=4
+            text "Tareas" role="heading" aria-level=1
+            text "Lo que queda por hacer" font="-exact-subheadline" color="text.muted"
+        row gap=8 align-items="center"
+          input value=draft input=edit submit=add placeholder="What needs doing?" aria-label="New todo"
+            testId="new-todo" appearance="none" class=Field
+          button press=add class=Primary testId="add"
+            text "Add" color="ink.on-brand"
+      section
+        for t in todos key=t.id
+          row delete=remove(t.id) testId=`todo-${t.id}` class=TodoRow
+            input type="checkbox" checked=t.done change=toggle(t.id) aria-label=t.title testId=`toggle-${t.id}`
+            text t.title flex=1 color=(t.done ? "text.muted" : "text.primary")
+            button press=remove(t.id) destructive=true testId=`remove-${t.id}` class=Quiet
+              text "Delete" color="status.alert"
+        footer
+          text `${left} left` font="-exact-footnote" color="text.muted" testId="count"
+
+component Weather
+  props
+    shown: bool
+  state draft = "Puerto Vallarta"
+  state query = "Puerto Vallarta"
+  state clientError = ""
+  resource report = loadWeather(query) when shown and query != "" as shape Report else empty()
+  derive placeTitle = report.place.admin1 != "" ? `${report.place.name}, ${report.place.admin1}` : report.place.name
+  derive phase = clientError != "" or failed(report) ? "error" : not current(report) ? "loading" : "success"
+  derive message = clientError != "" ? clientError : match failure(report) { case some(f) => f.code == "offline" ? "Sin conexión." : f.message, case none => "" }
+
+  action edit(value: string)
+    draft = value
+  action search
+    if draft.trim() == ""
+      clientError = "Escribe una ciudad."
+    else
+      clientError = ""
+      query = draft.trim()
+
+  view
+    scroll id="weather" flex=1 min-height=0 class=Screen display="flex" flex-direction="column"
+      column class=Column
+        text "Clima" role="heading" aria-level=1
+        text "Open-Meteo, sin API key" font="-exact-subheadline" color="text.muted"
+        column class=Card
+          row gap=8 align-items="center"
+            input value=draft input=edit submit=search placeholder="Ciudad, código postal o lat,lon"
+              aria-label="Ciudad" testId="city" appearance="none" class=Field
+            button press=search class=Primary testId="search"
+              text "Buscar" color="ink.on-brand"
+          text phase testId="weather-phase" display="none"
+          if phase == "loading"
+            text `Buscando ${query}…` role="status" testId="weather-loading" font="-exact-body" color="text.muted"
+          else if phase == "error"
+            text message role="alert" testId="weather-error" class=Alert
+          else
+            column gap=8 testId="weather-report"
+              text placeTitle font="-exact-title3" testId="weather-place"
+              if report.place.country != ""
+                text report.place.country font="-exact-subheadline" color="text.muted" testId="weather-country"
+              text `${report.current.temperatureC.toFixed(1)} °C` font="-exact-large-title" testId="weather-temp"
+              text report.current.condition font="-exact-title3" testId="weather-condition"
+              text `Viento ${report.current.windKmh.toFixed(1)} km/h` font="-exact-subheadline" color="text.muted" testId="weather-wind"
+              row gap=8 flex-wrap="wrap"
+                for day in report.daily key=day.date
+                  column class=DayCard
+                    text day.date font="-exact-caption2" color="text.muted" testId=`day-${day.date}`
+                    text day.condition font="-exact-caption1"
+                    text `${day.minC.toFixed(1)} °C – ${day.maxC.toFixed(1)} °C` font="-exact-caption2" testId=`range-${day.date}`
