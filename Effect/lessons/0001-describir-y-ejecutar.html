@@ -3,36 +3,45 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Construir y ejecutar un Effect</title>
+  <title>Cuándo se ejecuta un Effect</title>
   <link rel="stylesheet" href="../../foldkit/assets/foldkit-course.css">
 </head>
 <body>
 <article>
   <nav><a href="../README.md">Índice</a> · <a href="../reference/effect-y-elm.html">Referencia</a> · <a href="0002-servicios-y-schema.html">Siguiente</a></nav>
-  <h1>Construir y ejecutar un Effect</h1>
-  <p class="lede">Un valor de tipo <code>Effect</code> describe trabajo. El runtime de Effect interpreta esa descripción al ejecutarla.</p>
+  <h1>Cuándo se ejecuta un Effect</h1>
+  <p class="lede">Puedes guardar una tarea y decidir después cuándo hacerla.</p>
 
-  <h2>Cuándo empieza el trabajo</h2>
-  <pre><code>const program = Effect.sync(() =&gt; console.log("Dentro"))
-console.log("Fuera")
-await Effect.runPromise(program)</code></pre>
-  <p>La salida es <code>Fuera</code> y luego <code>Dentro</code>. <code>sync</code> guarda la función. <code>runPromise</code> pone el programa en marcha y devuelve una promesa. Con <code>fetch(url)</code>, la petición empieza al invocar <code>fetch</code>. Si lo adaptas con <code>Effect.tryPromise({ try: () =&gt; fetch(url), catch: … })</code>, la llamada queda dentro de una función diferida. Pasar un valor a <code>Effect.succeed</code> evalúa primero el argumento según las reglas normales de JavaScript. <a href="https://effect.website/docs/v4/getting-started/creating-effects">Creating Effects</a></p>
+  <h2>En JavaScript</h2>
+  <pre><code>const saludar = () =&gt; console.log("Hola")
 
-  <h2>Qué describe el tipo</h2>
-  <p>En <code>Effect.Effect&lt;number, InvalidQuantity, never&gt;</code>, <code>number</code> es el resultado exitoso, <code>InvalidQuantity</code> es el fallo esperado y el último <code>never</code> dice que todos los requisitos están satisfechos. Un segundo <code>never</code> indica que el canal de fallos esperados está vacío. Siguen siendo posibles defectos inesperados e interrupciones. <a href="https://effect.website/docs/v4/getting-started/the-effect-type">The Effect Type</a> · <a href="https://effect.website/docs/v4/getting-started/running-effects">Running Effects</a></p>
+console.log("Antes")
+saludar()</code></pre>
+  <p>La primera línea guarda una función. Primero se imprime <code>Antes</code>. Cuando llegas a <code>saludar()</code>, JavaScript entra en la función e imprime <code>Hola</code>.</p>
 
-  <h2>Qué hace yield*</h2>
-  <pre><code>const program = Effect.gen(function* () {
-  const quantity = yield* parseQuantity(input)
-  yield* Effect.sync(() =&gt; console.log(quantity))
-  return quantity * 25
-})</code></pre>
-  <p>Cuando se ejecuta el programa, el generador cede el primer Effect al runtime. Si tiene éxito, el runtime reanuda el generador con el número. Si falla, propaga el fallo y el log queda sin ejecutar. <code>map</code> sirve cuando el paso siguiente devuelve un valor ordinario. Usa <code>flatMap</code> cuando devuelve otro Effect que también hay que ejecutar. <a href="https://effect.website/docs/v4/getting-started/building-pipelines">Building Pipelines</a></p>
+  <h2>La misma tarea con Effect</h2>
+  <pre><code>import { Effect } from "effect"
 
-  <h2>Práctica</h2>
-  <p>Abre <a href="../examples/01-effect.ts">01-effect.ts</a>. Antes de correr <code>npm run basics</code>, predice cuántas veces aparece <code>Cantidad aceptada</code>. Luego cambia <code>"2"</code> por <code>"3"</code> y ajusta el resultado esperado en la aserción.</p>
-  <details><summary>Comprobar el resultado</summary><p>Aparece una vez. La llamada con <code>"dos"</code> falla en el primer <code>yield*</code>. Con <code>"3"</code> el total esperado es <code>75</code>.</p></details>
-  <p>Si una línea del generador te sorprende, trae esa línea y la salida para seguir la ejecución paso a paso.</p>
+const saludar = Effect.sync(() =&gt; console.log("Hola"))
+
+console.log("Antes")
+await Effect.runPromise(saludar)</code></pre>
+  <p>La salida es la misma. <code>Effect.sync</code> recibe la función y construye un <code>Effect</code>, un valor que describe el trabajo. <code>Effect.runPromise</code> ejecuta ese trabajo y devuelve una promesa. <code>await</code> espera a que termine. Es como dejar una tarea por escrito y decidir cuándo hacerla. En código, el trabajo concreto es la función que pasaste. <a href="https://effect.website/docs/v4/getting-started/creating-effects">Creating Effects</a></p>
+
+  <h2>¿Para qué guardarlo como Effect?</h2>
+  <p>Imagina que una tienda recibe la cantidad <code>"2"</code> desde un formulario. Cada pieza cuesta 25. Si la cantidad es válida, puede calcular el total. Si alguien escribe <code>"dos"</code>, la tienda necesita saber por qué no pudo calcularlo. Effect deja mostrar ambos resultados posibles en el tipo:</p>
+  <pre><code>Effect.Effect&lt;number, InvalidQuantity&gt;</code></pre>
+  <p><code>number</code> es lo que obtienes si sale bien. <code>InvalidQuantity</code> es el nombre que el ejemplo le da a la entrada inválida. El ejemplo devuelve 50 para <code>"2"</code> y produce <code>InvalidQuantity</code> para <code>"dos"</code>. <a href="https://effect.website/docs/v4/getting-started/the-effect-type">The Effect Type</a></p>
+
+  <h2>Prueba una línea</h2>
+  <p>Corre <code>npm run basics</code> desde <code>Effect/</code>. En <a href="../examples/01-effect.ts">01-effect.ts</a> busca <code>const program = total("2")</code>. Predice qué verás si mueves <code>console.log("Programa construido")</code> debajo de la línea que llama a <code>runPromise</code>. Haz el cambio y corre el comando otra vez.</p>
+  <details><summary>Ver qué ocurre</summary><p>Ahora aparece primero <code>Cantidad aceptada: 2</code>. Esa línea se imprime durante la ejecución. Después aparece <code>Programa construido</code>, porque moviste el mensaje hasta después del <code>await</code>. Restaura el orden para volver a la salida original.</p></details>
+
+  <details>
+    <summary>Si quieres leer el interior de total</summary>
+    <p><code>Effect.gen(function* () { … })</code> junta varios pasos en un solo Effect. Dentro, <code>const quantity = yield* parseQuantity(input)</code> pide que se ejecute el paso que convierte y comprueba la cantidad. Si obtiene un número, lo guarda en <code>quantity</code> y pasa a la línea siguiente. Si ese paso falla, el programa termina con ese fallo antes de imprimir la cantidad. <a href="https://effect.website/docs/v4/getting-started/building-pipelines">Building Pipelines</a></p>
+  </details>
+  <p>Si te pierdes en una línea, puedes pegarla en el chat junto con lo que esperabas que hiciera.</p>
 </article>
 </body>
 </html>

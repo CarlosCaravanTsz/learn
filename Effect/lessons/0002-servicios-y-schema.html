@@ -3,29 +3,43 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cargar datos con servicios y Schema</title>
+  <title>Comprobar el perfil que llegó</title>
   <link rel="stylesheet" href="../../foldkit/assets/foldkit-course.css">
 </head>
 <body>
 <article>
   <nav><a href="0001-describir-y-ejecutar.html">Anterior</a> · <a href="../reference/effect-y-elm.html">Referencia</a> · <a href="0003-elm-y-effect.html">Siguiente</a></nav>
-  <h1>Cargar datos con servicios y Schema</h1>
-  <p class="lede">Un servicio decide de dónde sale el dato. Un Schema comprueba si el dato que llegó cumple el contrato.</p>
+  <h1>Comprobar el perfil que llegó</h1>
+  <p class="lede">La pantalla quiere mostrar un nombre. Antes de usarlo, el programa comprueba que recibió texto.</p>
 
-  <h2>El contrato de la operación</h2>
-  <pre><code>Effect.Effect&lt;Profile, RequestError | Schema.SchemaError, ProfileSource&gt;</code></pre>
-  <p>En <code>loadProfile</code>, <code>yield* ProfileSource</code> pide al runtime la implementación asociada a esa clave de servicio. <code>source.get(id)</code> entrega un <code>unknown</code>. <code>Schema.decodeUnknownEffect(Profile)(raw)</code> examina el valor en tiempo de ejecución. Un objeto con <code>name: 42</code> produce un <code>SchemaError</code>. Si la promesa rechaza, <code>tryPromise</code> lo transforma en <code>RequestError</code> y la validación queda sin ejecutar. <a href="https://effect.website/docs/v4/requirements-management/services">Services</a> · <a href="https://effect.website/docs/v4/schema/introduction">Schema</a></p>
+  <h2>Dos respuestas posibles</h2>
+  <pre><code>{ id: "42", name: "Ada" }
+{ id: "42", name: 42 }</code></pre>
+  <p>Supón que estas respuestas llegan de un servidor. Con la primera puedes mostrar «Ada». La segunda trae un número donde esperas texto. Una afirmación de tipo como <code>as Profile</code> le dice a TypeScript qué tipo quieres atribuir al dato durante la revisión del código. El valor que llegó sigue siendo <code>42</code>.</p>
 
-  <h2>Dónde se elige la implementación</h2>
-  <pre><code>const runnable = loadProfile(id).pipe(Effect.provide(demoSource))
-await Effect.runPromise(runnable)</code></pre>
-  <p><code>Layer.succeed</code> registra una implementación ya construida. <code>Effect.provide</code> conecta esa capa al programa y satisface <code>ProfileSource</code>, por lo que aquí el requisito <code>R</code> pasa a <code>never</code>. Puedes usar otra capa para consumir HTTP sin modificar la validación. En una implementación con <code>fetch</code>, comprueba <code>response.ok</code> y pasa el <code>AbortSignal</code> que <code>tryPromise</code> entrega al callback si quieres que la interrupción llegue a la petición. <a href="https://effect.website/docs/v4/requirements-management/layers">Layers</a> · <a href="https://effect.website/docs/v4/getting-started/creating-effects">Creating Effects</a></p>
-  <p>El runtime ejecuta cada programa en una <em>fiber</em>, una unidad de ejecución que Effect puede coordinar e interrumpir. Si una operación necesita abrir un recurso, <code>acquireRelease</code> registra su cierre y <code>scoped</code> delimita su vida útil. Para fallos transitorios, <code>retry(Schedule.recurs(2))</code> permite hasta dos reintentos tras el intento inicial. Aplica esa política en el punto que pueda fallar de forma transitoria, como el acceso a la red. <a href="https://effect.website/docs/v4/runtime">Runtime</a> · <a href="https://effect.website/docs/v4/resource-management/scope">Scope</a> · <a href="https://effect.website/docs/v4/error-management/retrying">Retrying</a></p>
+  <h2>Una regla que el programa sí ejecuta</h2>
+  <pre><code>const Profile = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+})
 
-  <h2>Práctica</h2>
-  <p>En <a href="../examples/02-services.ts">02-services.ts</a>, cambia solo la respuesta de <code>"invalid"</code> a <code>{ id, name: "Lin" }</code>. Predice qué aserción de <a href="../examples/run-services.ts">run-services.ts</a> falla. Actualízala y vuelve a correr <code>npm run services</code>. Después retira temporalmente <code>Effect.provide(demoSource)</code> del runner y mira <code>npm run check</code>.</p>
-  <details><summary>Comprobar el resultado</summary><p><code>invalid</code> produce <code>Lin</code> y la aserción todavía espera <code>SchemaError</code>. Al quitar la capa, TypeScript señala que <code>runPromise</code> exige un Effect con <code>R = never</code> y que todavía falta <code>ProfileSource</code>. Restaura la capa al terminar.</p></details>
-  <p>Si el error del compilador te resulta difícil de leer, trae el mensaje y revisamos de dónde viene cada parámetro.</p>
+const checkProfile = Schema.decodeUnknownEffect(Profile)
+const program = checkProfile({ id: "42", name: 42 })</code></pre>
+  <p>Un <em>Schema</em> es una regla para comprobar datos. Aquí pide texto en <code>id</code> y en <code>name</code>. <code>checkProfile</code> recibe el dato y devuelve un Effect, como en la lección anterior. Cuando se ejecuta, revisa los campos. Si <code>name</code> es <code>42</code>, produce <code>SchemaError</code>, el nombre del fallo de validación. <a href="https://effect.website/docs/v4/schema/introduction">Introduction to Effect Schema</a></p>
+
+  <h2>De dónde viene el dato</h2>
+  <p>El ejemplo divide la carga en dos pasos. Primero pide el dato con <code>source.get(id)</code>. Luego comprueba el objeto que recibió. Si falla el primer paso, se muestra <code>RequestError</code>. Si llega un objeto con un campo inválido, se muestra <code>SchemaError</code>.</p>
+
+  <h2>Cambia un dato</h2>
+  <p>Corre <code>npm run services</code> desde <code>Effect/</code>. En <a href="../examples/02-services.ts">02-services.ts</a> busca <code>name: 42</code> y cámbialo por <code>name: "Lin"</code>. Predice qué se imprimirá al volver a correr el comando. El ejemplo también comprueba automáticamente la salida esperada.</p>
+  <details><summary>Ver qué ocurre</summary><p>Aparece <code>invalid → Lin</code>. <code>invalid</code> es el nombre del caso de prueba. El dato ya pasa la comprobación, así que la aserción falla porque todavía espera <code>SchemaError</code>. Restaura <code>name: 42</code> antes de seguir. La lección siguiente usa ese dato para mostrar un error en pantalla.</p></details>
+
+  <details>
+    <summary>Si quieres ver cómo se conecta el origen de datos</summary>
+    <p>Un <em>servicio</em> es un conjunto de operaciones que el programa puede pedir. Aquí <code>ProfileSource</code> identifica el servicio que ofrece <code>get(id)</code>. <code>demoSource</code> es una <em>Layer</em>, una forma de entregar la implementación de ese servicio. En este ejemplo entrega una función con respuestas de prueba.</p>
+    <p><code>Effect.provide(demoSource)</code> conecta esa implementación a <code>loadProfile</code>. Si lees <code>Effect&lt;Profile, RequestError | SchemaError, ProfileSource&gt;</code>, el tercer tipo dice qué servicio falta antes de ejecutar el programa. El segundo enumera los dos fallos que espera. <a href="https://effect.website/docs/v4/requirements-management/layers">Managing Layers</a></p>
+  </details>
+  <p>Si te cuesta seguir alguno de los dos fallos, puedes pegar en el chat el dato de entrada y la salida que viste.</p>
 </article>
 </body>
 </html>

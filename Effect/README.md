@@ -1,16 +1,16 @@
 # Effect desde React y TypeScript
 
-Effect convierte una operación en un valor que puedes componer antes de ejecutarlo. Su tipo dice qué devuelve, qué fallos esperados puede producir y qué servicios necesita. La arquitectura Elm organiza cómo cambia el estado de una interfaz. Foldkit aplica ese patrón en TypeScript y usa Effect para ejecutar trabajo externo.
+Empieza con una función que imprime «Hola». Luego sigue un perfil desde el dato que llega hasta el nombre que aparece en pantalla.
 
 ## Lecciones
 
-| Lección | Qué vas a poder hacer | Ejemplo |
+| Lección | Qué vas a practicar | Ejemplo |
 | --- | --- | --- |
-| [1. Construir y ejecutar un Effect](lessons/0001-describir-y-ejecutar.html) | Leer `Effect<A, E, R>` y seguir la ejecución de `yield*`. | `npm run basics` |
-| [2. Cargar datos con servicios y Schema](lessons/0002-servicios-y-schema.html) | Cambiar el origen de datos y distinguir un fallo de acceso de un dato inválido. | `npm run services` |
-| [3. Conectar Effect con el ciclo de Elm](lessons/0003-elm-y-effect.html) | Convertir el resultado de un Command en un mensaje y evitar que una respuesta vieja altere el estado. | `npm run elm` |
+| [1. Cuándo se ejecuta un Effect](lessons/0001-describir-y-ejecutar.html) | Predecir qué se imprime antes y después de llamar a `runPromise`. | `npm run basics` |
+| [2. Comprobar el perfil que llegó](lessons/0002-servicios-y-schema.html) | Comprobar qué pasa si el dato trae un número donde esperas un nombre. | `npm run services` |
+| [3. Del clic al nombre en pantalla](lessons/0003-elm-y-effect.html) | Seguir los dos mensajes que llevan la pantalla de «Cargando…» al resultado. | `npm run elm` |
 
-Abre los HTML en el navegador. Cada lección propone un cambio en el ejemplo y muestra cómo comprobar el resultado.
+Abre los HTML en orden. Cada lección tiene una práctica corta y una respuesta que puedes desplegar después de hacer tu predicción.
 
 ## Ejecutar los ejemplos
 
